@@ -216,3 +216,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---------------------------------------------------------------------------
+# Project-specific
+# ---------------------------------------------------------------------------
+# macOS Finder metadata
+.DS_Store
+
+# Downloaded Inside Airbnb datasets are large (100+ MB per big city) and are
+# NOT committed. Every teammate fetches them locally with:
+#     python scripts/download_data.py <city> [<city> ...]
+data/*
+!data/.gitkeep
