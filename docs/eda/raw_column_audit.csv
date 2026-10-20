@@ -1,0 +1,91 @@
+column,verdict,note,fill_2025,fill_2026,kind,signal_median,signal_min
+price,target,"per-night rate of one dated quote; clip to $10-$10,000; log",0.797,0.824,,,
+price_quote_price_per_night,target,identical to price in 2026 releases,,0.824,,,
+accommodates,use,strongest single column,1.0,1.0,numeric,0.7,0.57
+room_type,use,4 levels; fold Hotel/Shared into Private for the interpretable model,1.0,1.0,categorical,0.476,0.226
+calculated_host_listings_count_private_rooms,use,same,1.0,1.0,numeric,0.407,0.094
+calculated_host_listings_count_entire_homes,use,share of the host's portfolio,1.0,1.0,numeric,0.312,0.06
+longitude,use,same,1.0,1.0,numeric,0.207,0.001
+host_listings_count,use,log,0.999,0.995,numeric,0.203,0.018
+calculated_host_listings_count,use,log; >=5 = multi-listing host,1.0,1.0,numeric,0.189,0.028
+latitude,use,raw for the ensemble; distance-to-centre / spatial lag for the interpretable model,1.0,1.0,numeric,0.155,0.032
+number_of_reviews,use,log; lifetime track record,1.0,1.0,numeric,0.145,0.091
+first_review,use,tenure in months,0.802,0.758,numeric,0.077,0.024
+last_review,use,months since last review,0.802,0.758,numeric,0.07,0.012
+host_is_superhost,use,weak but expected by readers,0.964,0.995,numeric,0.058,0.024
+hosts_time_as_host_years,use,replaces host_since in 2026 releases,,0.995,numeric,0.05,0.003
+hosts_time_as_host_months,use,with the years column,,0.995,numeric,0.042,0.0
+bathrooms_text,use,parse to a number and a shared flag; fills the gaps of bathrooms,0.995,0.997,,,
+minimum_nights,use as control,stay-length rule; equals the quote's length for 83-97% of listings,1.0,1.0,numeric,0.06,0.029
+price_quote_checkin_date,use as control,lead days = check-in minus scrape date; 2026 releases only,,0.852,numeric,0.05,0.013
+price_quote_checkout_date,use as control,nights in the quote = checkout minus check-in; 2026 releases only,,0.852,,,
+property_type,use with caveat,~70 levels: group into hotel / apartment / house / other,1.0,1.0,categorical,0.66,0.517
+beds,use with caveat,74% filled: impute + missing flag,0.796,0.744,numeric,0.642,0.508
+bedrooms,use with caveat,80% filled in 2026: impute by room type + missing flag,0.958,0.803,numeric,0.62,0.457
+bathrooms,use with caveat,73% filled; parse bathrooms_text for the rest,0.797,0.727,numeric,0.525,0.374
+neighbourhood_cleansed,use with caveat,97-260 levels in big cities (pool those with <20 listings); only 6-7 levels in Las Vegas and Jersey City,1.0,1.0,categorical,0.493,0.101
+neighbourhood_group_cleansed,use with caveat,NYC and LA only,0.0,0.444,categorical,0.327,0.241
+review_scores_location,use with caveat,76% filled,0.802,0.758,numeric,0.237,0.131
+review_scores_rating,use with caveat,76% filled: fill + missing flag,0.802,0.758,numeric,0.158,0.072
+license,use with caveat,non-empty flag; city-specific; in NYC it determines whether a listing can quote nightly,0.557,0.42,,,
+maximum_minimum_nights,optional,same,1.0,1.0,numeric,0.157,0.05
+minimum_nights_avg_ntm,optional,calendar-derived,1.0,1.0,numeric,0.137,0.006
+review_scores_communication,optional,same,0.802,0.758,numeric,0.127,0.044
+review_scores_checkin,optional,same,0.802,0.758,numeric,0.126,0.046
+review_scores_accuracy,optional,same,0.802,0.758,numeric,0.118,0.032
+review_scores_cleanliness,optional,"76% filled, weak",0.802,0.758,numeric,0.111,0.073
+calculated_host_listings_count_shared_rooms,optional,rare,1.0,1.0,numeric,0.061,0.035
+minimum_minimum_nights,optional,near-duplicate of minimum_nights,1.0,1.0,numeric,0.06,0.029
+maximum_maximum_nights,optional,weak,1.0,1.0,numeric,0.045,0.028
+maximum_nights,optional,weak,1.0,1.0,numeric,0.045,0.028
+hosts_time_as_user_years,optional,weak,,0.995,numeric,0.034,0.015
+maximum_nights_avg_ntm,optional,calendar-derived,1.0,1.0,numeric,0.033,0.013
+host_has_profile_pic,optional,weak,0.999,0.995,numeric,0.029,0.004
+minimum_maximum_nights,optional,weak,1.0,1.0,numeric,0.026,0.0
+host_identity_verified,optional,weak,0.999,0.995,numeric,0.025,0.007
+hosts_time_as_user_months,optional,weak,,0.995,numeric,0.017,0.007
+number_of_reviews_ltm,validation only,recent review velocity = cleanest demand proxy,1.0,1.0,numeric,0.135,0.028
+number_of_reviews_ly,validation only,same,1.0,1.0,numeric,0.112,0.067
+reviews_per_month,validation only,same,0.802,0.758,numeric,0.111,0.059
+number_of_reviews_l30d,validation only,same,1.0,1.0,numeric,0.104,0.015
+availability_90,validation only,same,1.0,1.0,numeric,0.056,0.015
+availability_30,validation only,demand response to price (and host blocks),1.0,1.0,numeric,0.055,0.007
+availability_60,validation only,same,1.0,1.0,numeric,0.042,0.003
+availability_365,validation only,same,1.0,1.0,numeric,0.037,0.007
+availability_eoy,validation only,same,1.0,1.0,numeric,0.035,0.008
+has_availability,validation only,same,0.98,0.967,numeric,0.024,0.002
+description,later,free text: keyword flags / NLP,0.988,0.98,,,
+host_about,later,free text; 55% filled,0.562,0.554,,,
+host_location,later,free text; 75% filled,0.764,0.749,,,
+name,later,free text: keyword flags / NLP,1.0,1.0,,,
+price_quote_raw,later,JSON with discount line items; source of an undiscounted-price variant of the target,,0.852,,,
+amenities,set aside,JSON list; needs parsing into flags (team decision: later),1.0,1.0,,,
+estimated_revenue_l365d,no,price x estimated occupancy: leakage,0.797,0.824,numeric,0.285,0.017
+estimated_occupancy_l365d,no,formula of number_of_reviews_ltm and minimum_nights,1.0,1.0,numeric,0.142,0.023
+review_scores_value,no,guests rate value given the price: circular,0.802,0.758,numeric,0.038,0.007
+host_acceptance_rate,no,empty in every 2026 release,0.882,0.0,,,
+host_neighbourhood,no,empty in every 2026 release,0.694,0.0,,,
+host_response_rate,no,empty in every 2026 release,0.857,0.0,,,
+host_response_time,no,empty in every 2026 release,0.857,0.0,,,
+host_since,no,empty in every 2026 release,0.999,0.0,,,
+host_total_listings_count,no,empty in every 2026 release,0.999,0.0,,,
+instant_bookable,no,empty in every 2026 release,1.0,0.0,,,
+neighborhood_overview,no,empty in every 2026 release,0.458,0.0,,,
+neighbourhood,no,empty in every 2026 release,0.458,0.0,,,
+price_quote_total_price,no,price x nights: transform of the target,,0.824,,,
+source,identifier,,1.0,1.0,categorical,0.043,0.017
+calendar_last_scraped,identifier,,1.0,1.0,,,
+calendar_updated,identifier,,0.0,0.0,,,
+host_id,identifier,,1.0,1.0,,,
+host_name,identifier,,0.999,0.995,,,
+host_picture_url,identifier,,0.999,0.995,,,
+host_profile_id,identifier,,,0.995,,,
+host_profile_url,identifier,,,0.995,,,
+host_thumbnail_url,identifier,,0.999,0.0,,,
+host_url,identifier,,1.0,1.0,,,
+host_verifications,identifier,,0.999,0.0,,,
+id,identifier,,1.0,1.0,,,
+last_scraped,identifier,,1.0,1.0,,,
+listing_url,identifier,,1.0,1.0,,,
+picture_url,identifier,,1.0,1.0,,,
+scrape_id,identifier,,1.0,1.0,,,

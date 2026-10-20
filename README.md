@@ -52,11 +52,11 @@ download resumes where it stopped when you re-run the command.
 The date on a snapshot is the day Inside Airbnb scraped Airbnb for that city.
 Relative to that day, the files cover different spans:
 
-| file       | covers                                                   |
-|------------|----------------------------------------------------------|
-| listings   | the state of every listing on the scrape day             |
-| calendar   | availability and price for the next 365 days             |
-| reviews    | every review ever left (the only file with real history) |
+| file     | covers                                                   |
+| -------- | -------------------------------------------------------- |
+| listings | the state of every listing on the scrape day             |
+| calendar | availability and price for the next 365 days             |
+| reviews  | every review ever left (the only file with real history) |
 
 Most cities have 4 quarterly snapshots online (e.g. Boston: 2025-09-23,
 2025-12-27, 2026-03-28, 2026-06-15). New York City, Los Angeles and San
@@ -67,15 +67,15 @@ histories. `--list <city>` shows the exact dates.
 
 Each snapshot gets its own folder, `data/<city-slug>/<YYYY-MM-DD>/`:
 
-| `--files` key            | local file                | contents                                              |
-|--------------------------|---------------------------|-------------------------------------------------------|
-| `listings`               | `listings.csv.gz`         | one row per listing, ~75 columns (price, host, review scores, ...) |
-| `calendar`               | `calendar.csv.gz`         | one row per listing per day for the next 365 days (availability, price) |
-| `reviews`                | `reviews.csv.gz`          | one row per review with full comment text (largest file) |
-| `listings-summary`       | `listings_summary.csv`    | compact listings table (good for quick plots/maps)    |
-| `reviews-summary`        | `reviews_summary.csv`     | `listing_id`, `date` only (review counts over time)   |
-| `neighbourhoods`         | `neighbourhoods.csv`      | neighbourhood / neighbourhood-group lookup            |
-| `neighbourhoods-geojson` | `neighbourhoods.geojson`  | neighbourhood polygons for choropleth maps            |
+| `--files` key            | local file               | contents                                                                |
+| ------------------------ | ------------------------ | ----------------------------------------------------------------------- |
+| `listings`               | `listings.csv.gz`        | one row per listing, ~75 columns (price, host, review scores, ...)      |
+| `calendar`               | `calendar.csv.gz`        | one row per listing per day for the next 365 days (availability, price) |
+| `reviews`                | `reviews.csv.gz`         | one row per review with full comment text (largest file)                |
+| `listings-summary`       | `listings_summary.csv`   | compact listings table (good for quick plots/maps)                      |
+| `reviews-summary`        | `reviews_summary.csv`    | `listing_id`, `date` only (review counts over time)                     |
+| `neighbourhoods`         | `neighbourhoods.csv`     | neighbourhood / neighbourhood-group lookup                              |
+| `neighbourhoods-geojson` | `neighbourhoods.geojson` | neighbourhood polygons for choropleth maps                              |
 
 A `manifest.json` in each snapshot folder records the source URL, size and
 SHA-256 of every download, so we can confirm everyone has identical data.
@@ -105,19 +105,69 @@ for snap in sorted(p for p in city.iterdir() if p.is_dir()):
 listings_all = pd.concat(frames, ignore_index=True)
 ```
 
+### Which snapshots have prices
+
+Inside Airbnb left the `price` column empty in every December 2025 release
+and in the March 2026 release of four cities, so only these snapshots can be
+used as modelling targets (`strfair.data.priced_snapshots()` detects this from
+the data; the full table is in `docs/eda/price_coverage.csv`):
+
+| city            | priced snapshots                     |
+| --------------- | ------------------------------------ |
+| new-york-city   | 2026-03-16, 2026-06-14               |
+| los-angeles     | 2026-03-16, 2026-06-15               |
+| toronto         | 2025-09-11, 2026-03-19\*, 2026-06-15 |
+| san-diego       | 2025-09-25, 2026-06-27               |
+| clark-county-nv | 2025-09-23, 2026-06-27               |
+| jersey-city     | 2025-09-25, 2026-06-27               |
+
+\* partial scrape (28% of listings missing). Only the 2026 releases record the
+check-in date behind each quote; the September 2025 price has no quote date.
+
+## Shared package: `strfair/`
+
+Loaders and feature builders that notebooks and scripts import instead of
+copying cells (start Jupyter from the repo root, or add the root to
+`sys.path` as notebooks 02 and 03 do):
+
+```python
+from strfair.data import load_listings, priced_snapshots, PROJECT_CITIES
+from strfair.features import build_features
+
+listings = load_listings("jersey-city", priced_snapshots("jersey-city")[-1])
+features = build_features(listings)        # ~90 columns: target, quote timing, size, location,
+                                           # host, reviews, listing text, availability
+```
+
+- `strfair/data.py`: snapshot discovery (`list_snapshots`, `priced_snapshots`,
+  `PARTIAL_SNAPSHOTS`), loaders for every file type (same behaviour as the
+  helper cells of notebook 01).
+- `strfair/features.py`: one builder per feature family and `build_features()`
+  to run them all. The `amenities` column is not used yet (team decision,
+  Oct 2026); `CITY_CENTRES` is the reference table behind the
+  distance-to-centre feature.
+
 ## Notebooks
 
-`notebooks/01_load_city_starter.ipynb` is the starting point for analysis. It
-has loader functions for every file type (listings, calendar, reviews,
-neighbourhoods, GeoJSON) that handle the quirks of the data: `$1,234.00`
-price strings, `t`/`f` booleans, columns that were added or dropped between
-snapshots, and the snapshots known to be partial scrapes. Set `CITY` at the
-top and run it. Start Jupyter from the repo root so the notebook can find
-`data/`:
+| notebook                     | what it does                                                                                                                                                                                                             |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `01_load_city_starter.ipynb` | load one city, sanity-check it, plot a neighbourhood map                                                                                                                                                                 |
+| `02_raw_column_audit.ipynb`  | every priced snapshot of the six cities: which raw columns are filled, what `price` measures, the signal of each column, and a use / caveat / do-not-use verdict per column. Saves its tables and figures to `docs/eda/` |
+
+Start Jupyter from the repo root so the notebooks can find `data/`:
 
 ```bash
 jupyter lab
 ```
+
+## Docs
+
+- [`docs/features.md`](docs/features.md): which raw columns can be model
+  inputs, which cannot and why, and how the usable ones enter the models.
+- [`docs/models.md`](docs/models.md): candidate interpretable and ensemble
+  models, the evaluation protocol, and the recommendation.
+- `docs/eda/`: the tables (CSV) and figures (PNG) behind both documents,
+  produced by notebooks 02 and 03.
 
 ## Repo layout
 
@@ -125,10 +175,16 @@ jupyter lab
 cse6242-airbnb/
 ├── data/                       # downloaded datasets (git-ignored)
 │   └── <city>/<YYYY-MM-DD>/    # one folder per snapshot
+├── docs/
+│   ├── features.md             # raw column audit: usable / not usable
+│   ├── models.md               # candidate models + evaluation protocol
+│   └── eda/                    # tables and figures from notebooks 02/03
 ├── notebooks/
-│   └── 01_load_city_starter.ipynb
+│   ├── 01_load_city_starter.ipynb
+│   ├── 02_raw_column_audit.ipynb
 ├── scripts/
 │   └── download_data.py        # Inside Airbnb downloader (see above)
+├── strfair/                    # shared package: loaders + feature builders
 ├── requirements.txt
 └── README.md
 ```

@@ -1,0 +1,7 @@
+city,reviews,listings_with_any_review,listings_with_5plus,comment_chars_median_sample
+new-york-city,990170,0.725,0.502,273.0
+los-angeles,1856294,0.746,0.55,228.0
+toronto,679139,0.773,0.559,210.0
+san-diego,949213,0.833,0.7,217.0
+clark-county-nv,726693,0.719,0.511,146.0
+jersey-city,86754,0.804,0.609,178.0
