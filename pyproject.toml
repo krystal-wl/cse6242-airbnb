@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "strfair"
+version = "0.2.0"
+description = "CSE 6242 group project: price fairness in short-term rentals (Inside Airbnb). Shared data pipeline."
+requires-python = ">=3.10"
+dependencies = ["pandas>=2.0", "numpy>=1.24", "pyarrow>=11"]
+
+[tool.setuptools]
+packages = ["strfair"]

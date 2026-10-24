@@ -1,18 +1,36 @@
-"""Feature engineering for the fair-price models.
+"""Feature engineering: one function per family, ``build_features`` runs them all.
 
-Every builder takes the listings table returned by ``strfair.data.load_listings`` (any snapshot, any city)
-and returns a DataFrame aligned on its index. Columns that a snapshot does not carry are simply skipped, so
-the same code runs on the September 2025 schema (79 columns) and the 2026 schema (90 columns).
+Every family is a function ``df -> DataFrame``: it takes listings rows (``data.sample``) and returns new
+columns aligned on the same index. Families do not depend on each other, so you can read, change or add one
+without touching the rest. The amenity family lives in ``strfair/amenities.py``.
 
-``build_features`` is the one-stop entry point. The ``amenities`` column is deliberately not used yet
-(team decision, Oct 2026: work from the raw columns first).
+To add a feature for yourself, do it in your notebook, no package change needed::
+
+    extra = pd.DataFrame({"long_stay": (data.sample["minimum_nights"] >= 28).astype(int)})
+    F = pd.concat([data.features, extra], axis=1)
+
+To make a feature standard for everyone, write a family here and register it in ``FAMILIES``::
+
+    def my_features(df: pd.DataFrame) -> pd.DataFrame:
+        out = pd.DataFrame(index=df.index)
+        if "minimum_nights" in df:                      # skip columns a snapshot does not carry
+            out["long_stay"] = (pd.to_numeric(df["minimum_nights"], errors="coerce") >= 28).astype(int)
+        return out
+
+    FAMILIES["mine"] = my_features
+
+Columns a snapshot does not carry are skipped (``if "x" in df``), so the same code runs on the September
+2025 schema (79 columns) and the 2026 schema (90 columns).
 """
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
+
+from strfair.amenities import AMENITY_FLAGS, AMENITY_GROUPS, amenity_features, parse_amenities  # noqa: F401
 
 # ---------------------------------------------------------------------------------------------------------
 # Reference tables
@@ -33,7 +51,7 @@ LISTING_KEYWORDS: dict[str, str] = {
     "kw_view": r"\bview|skyline|ocean|waterfront",
     "kw_renovated": r"renovat|brand new|newly",
     "kw_cozy": r"\bcozy|cosy|charming",
-    "kw_walkable": r"walk to|walking distance|steps (from|to)|close to",
+    "kw_walkable": r"walk to|walking distance|steps (?:from|to)|close to",
 }
 
 
@@ -94,7 +112,7 @@ def target_and_quote_features(df: pd.DataFrame) -> pd.DataFrame:
         sub = pd.to_numeric(q.map(lambda d: d.get("discounted_subtotal")), errors="coerce")
         nightly_sub = pd.to_numeric(q.map(lambda d: d.get("nightly_subtotal")), errors="coerce")
         out["has_discount"] = disc.notna().astype(float).where(q.map(bool))
-        out["discount_amount"] = disc
+        out["discount_amount"] = disc.fillna(0.0).where(q.map(bool))  # 0 = quote without a discount
         gross = sub.add(disc, fill_value=0).where(sub.notna(), nightly_sub)
         out["discount_share"] = (disc / gross).where(disc.notna() & gross.gt(0), 0.0)
         nights = out["quote_nights"] if "quote_nights" in out else np.nan
@@ -258,6 +276,10 @@ def availability_features(df: pd.DataFrame) -> pd.DataFrame:
               "maximum_nights_avg_ntm", "maximum_nights"):
         if c in df:
             out[c] = pd.to_numeric(df[c], errors="coerce")
+    # a handful of hosts enter 2147483647 as the maximum stay; Airbnb's own cap is 1125 nights
+    for c in ("maximum_nights", "maximum_nights_avg_ntm"):
+        if c in out:
+            out[c] = out[c].clip(upper=1125)
     if "has_availability" in df:
         out["has_availability"] = df["has_availability"].map({True: 1, False: 0}).astype(float)
     if "availability_30" in out:
@@ -270,31 +292,36 @@ def availability_features(df: pd.DataFrame) -> pd.DataFrame:
 # ---------------------------------------------------------------------------------------------------------
 ID_COLS = ["id", "city", "snapshot"]
 
-
-def build_features(df: pd.DataFrame, city: str | None = None, include_availability: bool = True) -> pd.DataFrame:
-    """All feature families side by side, keyed by ``id`` / ``city`` / ``snapshot``.
-
-    Rows without a price are kept (price is NaN) so the same table can be used to score unpriced listings.
-    The ``amenities`` column is not used (team decision, Oct 2026: work from the raw columns first).
-    """
-    parts = [df[[c for c in ID_COLS if c in df]].copy(),
-             target_and_quote_features(df),
-             size_features(df),
-             location_features(df, city),
-             host_features(df),
-             review_features(df),
-             listing_text_features(df)]
-    if include_availability:
-        parts.append(availability_features(df))
-    out = pd.concat(parts, axis=1)
-    return out.loc[:, ~out.columns.duplicated()]
-
-
-FAMILIES = {
-    "target_quote": target_and_quote_features, "size": size_features, "location": location_features,
-    "host": host_features, "reviews": review_features,
-    "listing_text": listing_text_features, "availability": availability_features,
+#: Every family, in output order. Register a new one here.
+FAMILIES: dict[str, Callable[..., pd.DataFrame]] = {
+    "target_quote": target_and_quote_features,
+    "size": size_features,
+    "location": location_features,
+    "host": host_features,
+    "reviews": review_features,
+    "listing_text": listing_text_features,
+    "availability": availability_features,
+    "amenities": amenity_features,
 }
+
+
+def build_features(df: pd.DataFrame, city: str | None = None, families: list[str] | None = None,
+                   min_neighbourhood_n: int = 20) -> pd.DataFrame:
+    """All families side by side, keyed by ``id`` / ``city`` / ``snapshot``.
+
+    ``families`` selects a subset by name (default: every entry of ``FAMILIES``). Rows without a price are
+    kept (price is NaN) so the same table can score unpriced listings. Size columns keep their NaN (see
+    ``strfair.impute_sizes``); review scores are NaN for unreviewed listings.
+    """
+    parts = [df[[c for c in ID_COLS if c in df]].copy()]
+    for name in (list(FAMILIES) if families is None else families):
+        fn = FAMILIES[name]
+        parts.append(fn(df, city, min_neighbourhood_n) if name == "location" else fn(df))
+    out = pd.concat(parts, axis=1)
+    out = out.loc[:, ~out.columns.duplicated()]
+    if {"price", "accommodates"} <= set(out.columns):  # Wang & Nicolau (2017) target, as a variant
+        out["price_per_person"] = out["price"] / out["accommodates"].where(out["accommodates"] > 0)
+    return out
 
 
 def feature_families(df: pd.DataFrame) -> pd.Series:
@@ -306,5 +333,20 @@ def feature_families(df: pd.DataFrame) -> pd.Series:
     return pd.Series(fam, name="family")
 
 
+#: Categorical columns among the ``build_features`` output (for one-hot / ordinal encoders).
 CATEGORICAL = ["room", "room_type", "property_group", "neighbourhood", "neighbourhood_group", "lead_band",
                "min_nights_band"]
+
+#: Columns in the output that are functions of the price itself (docs/features.md §2): never model inputs.
+LEAKY = ["price", "log_price", "price_per_person", "price_undiscounted", "quote_total",
+         "estimated_revenue_l365d", "estimated_occupancy_l365d", "review_scores_value"]
+
+#: Demand responses to the price (availability, recent review velocity): the proposal uses them to validate
+#: the labels, not as inputs (docs/features.md §2, docs/models.md §3).
+DEMAND_RESPONSE = ["availability_30", "availability_60", "availability_90", "availability_365", "availability_eoy",
+                   "has_availability", "unavail_share_30", "number_of_reviews_ltm", "number_of_reviews_l30d",
+                   "reviews_per_month", "log_reviews_ltm", "active_ltm", "minimum_nights_avg_ntm",
+                   "maximum_nights_avg_ntm"]
+
+#: Keys, not features.
+ID_COLUMNS = ["id", "city", "snapshot"]

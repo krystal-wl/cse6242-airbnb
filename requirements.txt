@@ -5,10 +5,11 @@ beautifulsoup4>=4.12
 # Analysis notebooks (notebooks/) and the shared package (strfair/)
 pandas>=2.0
 numpy>=1.24
+pyarrow>=11        # parquet cache written by strfair.prepare()
 matplotlib>=3.7
 jupyter
 
-# Modelling (notebooks/03_model_candidates.ipynb, docs/models.md)
+# Modelling (docs/models.md)
 scikit-learn>=1.3
 statsmodels>=0.14
 scipy>=1.10

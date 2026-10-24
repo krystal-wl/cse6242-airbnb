@@ -124,33 +124,53 @@ the data; the full table is in `docs/eda/price_coverage.csv`):
 \* partial scrape (28% of listings missing). Only the 2026 releases record the
 check-in date behind each quote; the September 2025 price has no quote date.
 
-## Shared package: `strfair/`
+## Shared package: `strfair/` and the data pipeline
 
-Loaders and feature builders that notebooks and scripts import instead of
-copying cells (start Jupyter from the repo root, or add the root to
-`sys.path` as notebooks 02 and 03 do):
+Every model notebook starts the same way: name a city and a snapshot, call
+`prepare`, and get the same frames as everyone else
+([`docs/pipeline.md`](docs/pipeline.md) has the details; copy
+`notebooks/00_prepare_template.ipynb` to start a notebook). Everything after
+that call (features, split, imputation, model) is the notebook's own.
 
 ```python
-from strfair.data import load_listings, priced_snapshots, PROJECT_CITIES
-from strfair.features import build_features
+import strfair
 
-listings = load_listings("jersey-city", priced_snapshots("jersey-city")[-1])
-features = build_features(listings)        # ~90 columns: target, quote timing, size, location,
-                                           # host, reviews, listing text, availability
+CITY, SNAPSHOT = "toronto", "2026-06-15"     # the team's dates: strfair.PINNED_SNAPSHOTS
+data = strfair.prepare(CITY, SNAPSHOT)
+# toronto 2026-06-15 | listings 22,198 rows, 18,262 in sample | features 106 cols | code 025a7a1b | data 597d7dbb
+
+data.listings                                # every listing, typed, with an in_sample flag (the contract)
+data.sample                                  # the in-sample rows
+data.features                                # standard features for those rows: a starting point, not a contract
+data.reviews, data.calendar, data.neighbourhoods, data.geojson
 ```
 
+Install the package once so `import strfair` works from any directory
+(otherwise start Jupyter from the repo root):
+
+```bash
+pip install -e .
+```
+
+- `strfair/config.py`: what the data is: the pinned snapshot per city and its
+  sha256, the schema, and which listings are in the sample. Nothing about
+  modelling. Change a rule there, bump `VERSION`, open a PR.
+- `strfair/prep.py`: `prepare()` verifies the raw file, types it, marks the
+  sample, builds the standard features, caches parquet under
+  `data/processed/<VERSION>/`, and prints a fingerprint so two people can
+  confirm they hold the same data. `impute_sizes()` is an optional helper.
 - `strfair/data.py`: snapshot discovery (`list_snapshots`, `priced_snapshots`,
-  `PARTIAL_SNAPSHOTS`), loaders for every file type (same behaviour as the
-  helper cells of notebook 01).
-- `strfair/features.py`: one builder per feature family and `build_features()`
-  to run them all. The `amenities` column is not used yet (team decision,
-  Oct 2026); `CITY_CENTRES` is the reference table behind the
-  distance-to-centre feature.
+  `PARTIAL_SNAPSHOTS`), loaders for every file type.
+- `strfair/features.py`: one builder per feature family (`build_features()`
+  runs them all), including the amenity family that absorbed
+  `scripts/amenities_breakout.py`, plus the `LEAKY` / `DEMAND_RESPONSE`
+  reference lists.
 
 ## Notebooks
 
 | notebook                     | what it does                                                                                                                                                                                                             |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `00_prepare_template.ipynb`  | the two cells every model notebook starts with; copy it                                                                                                                                                                  |
 | `01_load_city_starter.ipynb` | load one city, sanity-check it, plot a neighbourhood map                                                                                                                                                                 |
 | `02_raw_column_audit.ipynb`  | every priced snapshot of the six cities: which raw columns are filled, what `price` measures, the signal of each column, and a use / caveat / do-not-use verdict per column. Saves its tables and figures to `docs/eda/` |
 
@@ -162,29 +182,45 @@ jupyter lab
 
 ## Docs
 
+- [`docs/pipeline.md`](docs/pipeline.md): the preprocessing every notebook
+  shares: steps, the frames you get, column roles, how to check two people
+  hold the same data.
 - [`docs/features.md`](docs/features.md): which raw columns can be model
   inputs, which cannot and why, and how the usable ones enter the models.
+- [`docs/features_selection.md`](docs/features_selection.md): the column
+  choices checked against Wang & Nicolau (2017).
 - [`docs/models.md`](docs/models.md): candidate interpretable and ensemble
   models, the evaluation protocol, and the recommendation.
-- `docs/eda/`: the tables (CSV) and figures (PNG) behind both documents,
-  produced by notebooks 02 and 03.
+- `docs/eda/`: the tables (CSV) and figures (PNG) behind the documents,
+  produced by notebook 02.
 
 ## Repo layout
 
 ```
 cse6242-airbnb/
-├── data/                       # downloaded datasets (git-ignored)
-│   └── <city>/<YYYY-MM-DD>/    # one folder per snapshot
+├── data/                       # git-ignored
+│   ├── <city>/<YYYY-MM-DD>/    # downloaded snapshots, one folder each
+│   └── processed/<version>/    # parquet cache written by strfair.prepare()
 ├── docs/
+│   ├── pipeline.md             # the shared preprocessing: steps, frames, roles
 │   ├── features.md             # raw column audit: usable / not usable
+│   ├── features_selection.md   # column choices vs Wang & Nicolau (2017)
 │   ├── models.md               # candidate models + evaluation protocol
-│   └── eda/                    # tables and figures from notebooks 02/03
+│   └── eda/                    # tables and figures from notebook 02
 ├── notebooks/
+│   ├── 00_prepare_template.ipynb
 │   ├── 01_load_city_starter.ipynb
-│   ├── 02_raw_column_audit.ipynb
+│   └── 02_raw_column_audit.ipynb
 ├── scripts/
-│   └── download_data.py        # Inside Airbnb downloader (see above)
-├── strfair/                    # shared package: loaders + feature builders
+│   ├── download_data.py        # Inside Airbnb downloader (see above)
+│   └── amenities_breakout.py   # absorbed into strfair.features.amenity_features
+├── strfair/                    # shared package
+│   ├── config.py               # what the data is: snapshots, sha256, schema, sample rule
+│   ├── prep.py                 # prepare(): verify, type, mark the sample, standard features
+│   ├── data.py                 # snapshot discovery + loaders
+│   ├── features.py             # feature families; how to add one is in its docstring
+│   └── amenities.py            # the amenity family (kentxie's groups + the four flags)
+├── pyproject.toml              # pip install -e .
 ├── requirements.txt
 └── README.md
 ```
