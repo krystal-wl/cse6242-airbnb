@@ -165,6 +165,73 @@ pip install -e .
   runs them all), including the amenity family that absorbed
   `scripts/amenities_breakout.py`, plus the `LEAKY` / `DEMAND_RESPONSE`
   reference lists.
+- `strfair/sentiment.py`: cleans review text, detects English-language reviews,
+  computes VADER sentiment scores, and aggregates five listing-level
+  sentiment features.
+  
+### Review Sentiment Analysis
+
+The shared preprocessing pipeline includes VADER-based sentiment analysis of Airbnb guest reviews. Sentiment features are automatically generated when `strfair.prepare()` builds the dataset. No separate notebook is required.
+
+**Setup and required data**
+
+After pulling the latest code, install the updated dependencies:
+
+```bash
+python -m pip install -e .
+```
+
+The full review-text file (`reviews.csv.gz`) must be available locally for the selected city and snapshot. For example:
+
+```bash
+python scripts/download_data.py toronto@2026-06-15
+```
+
+**Usage**
+
+```python
+import strfair
+
+data = strfair.prepare("toronto", "2026-06-15")
+features = data.features
+
+sentiment_cols = [
+    "sentiment_review_count",
+    "avg_sentiment",
+    "sentiment_std",
+    "negative_review_pct",
+    "weighted_sentiment",
+]
+
+print(features[sentiment_cols].head())
+```
+
+**Generated sentiment features**
+
+| Feature | Description |
+|---|---|
+| `sentiment_review_count` | Number of eligible reviews per listing |
+| `avg_sentiment` | Average VADER compound sentiment score (-1 to +1) |
+| `sentiment_std` | Standard deviation of sentiment scores; missing when fewer than 3 eligible reviews |
+| `negative_review_pct` | Proportion of eligible reviews classified as negative |
+| `weighted_sentiment` | Recency-weighted sentiment score (more weight is given to sentiment scores from reviews posted closer to the data snapshot date) |
+
+**Review preprocessing**
+
+- Removes missing, empty, and very short reviews (5 words or fewer).
+- Keeps English-language reviews only.
+- Excludes reviews dated after the snapshot date to prevent data leakage.
+- Uses VADER to calculate sentiment scores and classify reviews as positive, neutral, or negative.
+- Aggregates review sentiment at the listing level.
+
+**Modeling considerations**
+
+- Listings without eligible reviews are preserved with missing sentiment values.
+- Handle missing sentiment values during model preprocessing rather than automatically dropping listings.
+- Compare models with and without sentiment features to evaluate their predictive value.
+- Sentiment processing may increase initial preparation time. Valid cached results can be reused when `cache=True`.
+
+Implementation: `strfair/sentiment.py`, integrated through `strfair/prep.py`.
 
 ## Notebooks
 
@@ -220,6 +287,7 @@ cse6242-airbnb/
 │   ├── data.py                 # snapshot discovery + loaders
 │   ├── features.py             # feature families; how to add one is in its docstring
 │   └── amenities.py            # the amenity family (kentxie's groups + the four flags)
+│   └── sentiment.py.           # sentiment features
 ├── pyproject.toml              # pip install -e .
 ├── requirements.txt
 └── README.md
