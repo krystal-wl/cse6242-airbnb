@@ -38,9 +38,10 @@ from strfair import config as C
 from strfair.data import (DATA_DIR, is_partial, list_snapshots, load_calendar, load_geojson, load_listings,
                           load_listings_summary, load_neighbourhoods, load_reviews, priced_snapshots, snapshot_dir)
 from strfair.features import build_features
+from strfair.sentiment import build_sentiment_features
 
 PROCESSED_DIR = DATA_DIR / "processed"
-_SOURCE_FILES = ["config.py", "data.py", "features.py", "amenities.py", "prep.py"]
+_SOURCE_FILES = ["config.py", "data.py", "features.py", "amenities.py", "sentiment.py", "prep.py"]
 
 
 # ---------------------------------------------------------------------------------------------------------
@@ -151,6 +152,33 @@ def build(city: str, snapshot: str, strict: bool = True) -> tuple[pd.DataFrame, 
                          f"{priced_snapshots(city)}")
     sample = listings[listings["in_sample"]].drop(columns="in_sample")
     features = build_features(sample, city).reset_index(drop=True)
+
+    # Load reviews for the selected city and snapshot
+    reviews = load_reviews(city, snapshot, with_text=True)
+
+    # Keep only reviews for listings in our modeling sample
+    reviews = reviews[
+    reviews["listing_id"].isin(sample["id"])].copy()
+
+    # Generate sentiment features
+    sentiment_features = build_sentiment_features(
+    reviews=reviews,
+    snapshot_date=snapshot,
+    half_life_days=730
+    )
+
+    # Merge sentiment features into the existing listing features
+    features = features.merge(
+    sentiment_features,
+    how="left",
+    left_on="id",
+    right_on="listing_id",
+    validate="one_to_one"
+    )
+
+    # Remove the duplicate ID column
+    features = features.drop(columns=["listing_id"])
+
     return listings.reset_index(drop=True), features
 
 
