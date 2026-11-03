@@ -247,6 +247,28 @@ Start Jupyter from the repo root so the notebooks can find `data/`:
 jupyter lab
 ```
 
+## Interactive map (`site/`)
+
+A static site over precomputed scores: no server, no modelling at request time
+([`docs/map_design.md`](docs/map_design.md) is the design). It reads one scored
+table per city from `data/scored/<city>_<snapshot>/scored.parquet`, the contract
+the modelling notebooks produce. Until they do, a placeholder scorer fills it:
+
+```bash
+python scripts/stub_scores.py --all        # placeholder scores: ridge + random forest, out-of-fold (~3 min)
+python scripts/build_map_data.py --all     # -> site/data/*.json (git-ignored, like data/)
+python scripts/build_attractions.py        # optional overlay: geocodes Kent's attraction list (~2 min)
+python -m http.server 8765 --directory site
+```
+
+Then open <http://localhost:8765>. One city at a time: points coloured by label,
+filters (stay type defaults to nightly quotes), a listing card with the benchmark,
+a dollar waterfall, comparables and the March-vs-June label where a city has two
+priced releases, a compare basket, a neighbourhood layer, and a band slider. Paste
+an Airbnb listing URL or id in the search box to jump to it. The map reads only
+the scored table, so swapping the stub for the real models is a rebuild, not a
+code change.
+
 ## Docs
 
 - [`docs/pipeline.md`](docs/pipeline.md): the preprocessing every notebook
@@ -258,6 +280,8 @@ jupyter lab
   choices checked against Wang & Nicolau (2017).
 - [`docs/models.md`](docs/models.md): candidate interpretable and ensemble
   models, the evaluation protocol, and the recommendation.
+- [`docs/map_design.md`](docs/map_design.md): the interactive map: what it
+  shows, the fixed feature set, the scored-table contract it reads, stack, plan.
 - `docs/eda/`: the tables (CSV) and figures (PNG) behind the documents,
   produced by notebook 02.
 
@@ -273,6 +297,7 @@ cse6242-airbnb/
 │   ├── features.md             # raw column audit: usable / not usable
 │   ├── features_selection.md   # column choices vs Wang & Nicolau (2017)
 │   ├── models.md               # candidate models + evaluation protocol
+│   ├── map_design.md           # the interactive map: scope, data contract, stack
 │   └── eda/                    # tables and figures from notebook 02
 ├── notebooks/
 │   ├── 00_prepare_template.ipynb
@@ -280,7 +305,15 @@ cse6242-airbnb/
 │   └── 02_raw_column_audit.ipynb
 ├── scripts/
 │   ├── download_data.py        # Inside Airbnb downloader (see above)
-│   └── amenities_breakout.py   # absorbed into strfair.features.amenity_features
+│   ├── amenities_breakout.py   # absorbed into strfair.features.amenity_features
+│   ├── tourist_area_distance.py # Kent's attraction list + distance feature
+│   ├── stub_scores.py          # placeholder scored table until the models exist
+│   ├── build_map_data.py       # scored table -> site/data/ (the map's files)
+│   └── build_attractions.py    # attraction overlay (geocodes the list above)
+├── site/                       # the interactive map: static HTML + ES modules
+│   ├── index.html, styles.css
+│   ├── app/                    # main, mapview, filters, card, compare, hoods, charts
+│   └── data/                   # git-ignored, written by build_map_data.py
 ├── strfair/                    # shared package
 │   ├── config.py               # what the data is: snapshots, sha256, schema, sample rule
 │   ├── prep.py                 # prepare(): verify, type, mark the sample, standard features
