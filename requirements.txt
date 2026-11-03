@@ -13,6 +13,9 @@ jupyter
 vaderSentiment>=3.3.2
 langdetect>=1.0.9
 
+# Calculating tourist area distance
+geopy>=2.5.0
+
 # Modelling (docs/models.md)
 scikit-learn>=1.3
 statsmodels>=0.14
