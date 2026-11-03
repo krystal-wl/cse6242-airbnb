@@ -1,10 +1,17 @@
-def tourist_area_distance(df):
-    import time
-    import numpy as np
-    import pandas as pd
-    from geopy.geocoders import Nominatim
-    from geopy.exc import GeocoderTimedOut
-    from sklearn.neighbors import BallTree # LIBRARY OPTIMIZE FOR CALCULATING DISTANCE
+import time
+import numpy as np
+import pandas as pd
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut
+from strfair.data import DATA_DIR
+from sklearn.neighbors import BallTree  # LIBRARY OPTIMIZE FOR CALCULATING DISTANCE
+
+CACHE_PATH = DATA_DIR / "tourist_attractions_geocoded.csv"
+
+def build_tourist_area():
+    if CACHE_PATH.exists():
+        print("Existing geocoding file found")
+        return pd.read_csv(CACHE_PATH)
 
     # LIST OF TOURIST ATTRACTIONS IN EACH CITY (CAN ADD MORE)
     tourist_data = [
@@ -26,7 +33,7 @@ def tourist_area_distance(df):
         ("New York City", "Williamsburg"),
         ("New York City", "DUMBO"),
         ("New York City", "West Village"),
-        
+
         # Toronto
         ("Toronto", "CN Tower"),
         ("Toronto", "Royal Ontario Museum"),
@@ -41,7 +48,7 @@ def tourist_area_distance(df):
         ("Toronto", "Yorkville"),
         ("Toronto", "Kensington Market"),
         ("Toronto", "Financial District"),
-        
+
         # Los Angeles
         ("Los Angeles", "Hollywood Sign"),
         ("Los Angeles", "Griffith Observatory"),
@@ -63,7 +70,7 @@ def tourist_area_distance(df):
         ("Los Angeles", "Echo Park"),
         ("Los Angeles", "Koreatown"),
         ("Los Angeles", "Beverly Hills"),
-        
+
         # Boston
         ("Boston", "Freedom Trail"),
         ("Boston", "Boston Common"),
@@ -79,7 +86,7 @@ def tourist_area_distance(df):
         ("Boston", "Prudential Center"),
         ("Boston", "Seaport"),
         ("Boston", "Beacon Hill"),
-        
+
         # San Diego
         ("San Diego", "Balboa Park"),
         ("San Diego", "San Diego Zoo"),
@@ -96,7 +103,7 @@ def tourist_area_distance(df):
         ("San Diego", "Ocean Beach"),
         ("San Diego", "Point Loma"),
         ("San Diego", "SeaWorld"),
-        
+
         # Clark County, NV
         ("Clark County, NV", "The Las Vegas Strip"),
         ("Clark County, NV", "Fremont Street Experience"),
@@ -110,21 +117,21 @@ def tourist_area_distance(df):
         ("Clark County, NV", "Seven Magic Mountains"),
         ("Clark County, NV", "Strat Hotel")
     ]
-    
+
     # CREATE DATAFRAME FOR THE TOURIST ATTRACTIONS
     df_attractions = pd.DataFrame(tourist_data, columns=['city', 'attraction'])
-    
-    
+
     # INITIATE LOCATOR FOR RETRIEVING THE LATITUDE AND LONGITUDE OF TOURIST ATTRACTION
     locator = Nominatim(user_agent="my_tourist_app_analytics")
-    
+
     latitudes = []
     longitudes = []
-    
+
+    print("Geocoding tourist attractions for the first time...")
     for idx, row in df_attractions.iterrows():
-        # COMBINE ATTRACTION AND CITY TO ENSURE THE CORRECTLOCATION IS PULLED
+        # COMBINE ATTRACTION AND CITY TO ENSURE THE CORRECT LOCATION IS PULLED
         query = f"{row['attraction']}, {row['city']}"
-        
+
         try:
             location = locator.geocode(query)
             if location:
@@ -136,16 +143,23 @@ def tourist_area_distance(df):
         except GeocoderTimedOut:
             latitudes.append(None)
             longitudes.append(None)
-        
+
         # SLEEP FOR 1 SECOND DUE TO NOMINATIM USAGE POLICY
         time.sleep(1)
-    
+
     df_attractions['latitude'] = latitudes
     df_attractions['longitude'] = longitudes
 
-    # DROP ANY TOURIST ATTRACTIONS THAT WERE NOT FOUND 
+    # DROP ANY TOURIST ATTRACTIONS THAT WERE NOT FOUND
     df_attractions.dropna(inplace=True)
-    
+
+    CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    df_attractions.to_csv(CACHE_PATH, index=False)
+
+    return df_attractions
+
+
+def tourist_area_distance(df,df_attractions):
     # CALCULATE THE DISTANCE TO THE CLOSEST TOURIST ATTRACTION TO LISTING  
     kms_per_radian = 6371.0
 
