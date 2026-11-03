@@ -31,6 +31,7 @@ import time
 import warnings
 from functools import cached_property
 from pathlib import Path
+import numpy as np
 
 import pandas as pd
 
@@ -39,9 +40,12 @@ from strfair.data import (DATA_DIR, is_partial, list_snapshots, load_calendar, l
                           load_listings_summary, load_neighbourhoods, load_reviews, priced_snapshots, snapshot_dir)
 from strfair.features import build_features
 from strfair.sentiment import build_sentiment_features
+from strfair.tourist_area_distance import tourist_area_distance
+from strfair.tourist_area_distance import build_tourist_area
 
 PROCESSED_DIR = DATA_DIR / "processed"
-_SOURCE_FILES = ["config.py", "data.py", "features.py", "amenities.py", "sentiment.py", "prep.py"]
+_SOURCE_FILES = ["config.py", "data.py", "features.py", "amenities.py", "sentiment.py", "tourist_area_distance.py",
+                 "prep.py"]
 
 
 # ---------------------------------------------------------------------------------------------------------
@@ -153,27 +157,36 @@ def build(city: str, snapshot: str, strict: bool = True) -> tuple[pd.DataFrame, 
     sample = listings[listings["in_sample"]].drop(columns="in_sample")
     features = build_features(sample, city).reset_index(drop=True)
 
+    # GENERATE LAT LONGS FOR TOURIST AREAS
+    df_attractions = build_tourist_area()
+
+    distance_df = tourist_area_distance(features, df_attractions)
+    features["dist_to_nearest_attraction_km"] = distance_df["dist_to_nearest_attraction_km"].values
+    features["dist_to_nearest_attraction_km"] = distance_df["dist_to_nearest_attraction_km"].values
+    features['dist_exp_decay'] = np.exp(-features['dist_to_nearest_attraction_km'] / 2.5)
+    features["nearest_attraction"] = distance_df["nearest_attraction"].values
+
     # Load reviews for the selected city and snapshot
     reviews = load_reviews(city, snapshot, with_text=True)
 
     # Keep only reviews for listings in our modeling sample
     reviews = reviews[
-    reviews["listing_id"].isin(sample["id"])].copy()
+        reviews["listing_id"].isin(sample["id"])].copy()
 
     # Generate sentiment features
     sentiment_features = build_sentiment_features(
-    reviews=reviews,
-    snapshot_date=snapshot,
-    half_life_days=730
+        reviews=reviews,
+        snapshot_date=snapshot,
+        half_life_days=730
     )
 
     # Merge sentiment features into the existing listing features
     features = features.merge(
-    sentiment_features,
-    how="left",
-    left_on="id",
-    right_on="listing_id",
-    validate="one_to_one"
+        sentiment_features,
+        how="left",
+        left_on="id",
+        right_on="listing_id",
+        validate="one_to_one"
     )
 
     # Remove the duplicate ID column
@@ -296,7 +309,8 @@ def prepare(city: str, snapshot: str, *, cache: bool = True, strict: bool = True
         features = _read_parquet(folder / "features.parquet")
         meta = {
             "city": city, "snapshot": snapshot, "version": C.VERSION, "code_hash": code_hash(),
-            "built_at": pd.Timestamp.utcnow().isoformat(timespec="seconds"), "build_seconds": round(time.time() - t0, 1),
+            "built_at": pd.Timestamp.utcnow().isoformat(timespec="seconds"),
+            "build_seconds": round(time.time() - t0, 1),
             "listings_rows": len(listings), "sample_rows": int(listings["in_sample"].sum()),
             "features_cols": features.shape[1],
             "fingerprint": fingerprint(listings), "features_fingerprint": fingerprint(features),
