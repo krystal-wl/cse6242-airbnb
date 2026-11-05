@@ -1,0 +1,92 @@
+column,group,candidate,elastic_net,random_forest,reason
+lead_days,target_quote,True,True,True,
+quote_nights,target_quote,True,True,True,
+weekend_checkin,target_quote,True,True,True,
+checkin_dow,target_quote,True,True,True,
+checkin_month,target_quote,True,True,True,
+is_monthly_quote,target_quote,True,True,True,
+lead_band,target_quote,True,True,True,
+has_discount,target_quote,True,True,True,
+discount_share,target_quote,True,True,True,
+minimum_nights,target_quote,True,False,True,Elastic net: other form of a column (B1)
+min_nights_band,target_quote,True,True,True,
+room_type,size,True,True,True,
+room,size,True,False,True,Elastic net: other form of a column (B1)
+property_group,size,True,True,True,
+accommodates,size,True,True,True,
+bedrooms,size,True,True,True,
+beds,size,True,True,True,
+shared_bath,size,True,True,True,
+baths,size,True,True,True,
+guests_per_bedroom,size,True,False,True,Elastic net: other form of a column (B1)
+guests_per_bed,size,True,False,True,Elastic net: other form of a column (B1)
+latitude,location,True,True,True,
+longitude,location,True,True,True,
+km_to_centre,location,True,False,True,Elastic net: other form of a column (B1)
+log_km_to_centre,location,True,True,True,
+neighbourhood,location,True,True,True,
+neighbourhood_group,location,True,True,True,
+superhost,host,True,True,True,
+host_identity_verified,host,False,False,False,almost one value (A1)
+host_has_profile_pic,host,False,False,False,almost one value (A1)
+host_listings_count,host,True,True,True,
+calculated_host_listings_count,host,True,False,True,Elastic net: other form of a column (B1)
+calculated_host_listings_count_entire_homes,host,True,True,True,
+calculated_host_listings_count_private_rooms,host,True,True,True,
+log_host_listings,host,True,True,True,
+multi_host,host,True,False,True,Elastic net: other form of a column (B1)
+single_listing_host,host,True,False,True,Elastic net: other form of a column (B1)
+host_entire_home_share,host,True,True,True,
+host_years,host,True,True,True,
+number_of_reviews,reviews,True,False,True,Elastic net: other form of a column (B1)
+log_reviews,reviews,True,True,True,
+no_reviews,reviews,True,False,True,Elastic net: other form of a column (B1)
+tenure_months,reviews,True,True,True,
+new_listing,reviews,True,True,True,
+months_since_last_review,reviews,True,True,True,
+review_scores_rating,reviews,True,False,True,Elastic net: other form of a column (B1)
+review_scores_accuracy,reviews,True,True,True,
+review_scores_cleanliness,reviews,True,True,True,
+review_scores_checkin,reviews,True,True,True,
+review_scores_communication,reviews,True,True,True,
+review_scores_location,reviews,True,True,True,
+no_rating,reviews,True,True,True,
+rating_filled,reviews,True,True,True,
+name_len,listing_text,True,True,True,
+desc_len,listing_text,True,True,True,
+has_description,listing_text,False,False,False,almost one value (A1)
+kw_luxury,listing_text,True,True,True,
+kw_view,listing_text,True,True,True,
+kw_renovated,listing_text,True,True,True,
+kw_cozy,listing_text,True,True,True,
+kw_walkable,listing_text,True,True,True,
+has_neighborhood_overview,listing_text,False,False,False,almost one value (A1)
+has_license,listing_text,True,True,True,
+license_exempt,listing_text,True,True,True,
+host_about_len,listing_text,True,True,True,
+maximum_nights,availability,True,True,True,
+n_amenities,amenities,True,True,True,
+amg_tv_streaming,amenities,True,True,True,
+amg_entertainment,amenities,True,True,True,
+amg_outdoor_views,amenities,True,True,True,
+amg_grill,amenities,True,True,True,
+amg_luxury_recreation,amenities,True,True,True,
+amg_cooking_appliances,amenities,True,True,True,
+amg_climate_control,amenities,True,True,True,
+amg_exercise_facilities,amenities,True,True,True,
+amg_parking,amenities,True,True,True,
+amg_laundry,amenities,True,True,True,
+amg_connectivity,amenities,False,False,False,almost one value (A1)
+amg_breakfast,amenities,False,False,False,almost one value (A1)
+amg_fridge_freezer,amenities,True,True,True,
+am_wifi,amenities,False,False,False,almost one value (A1)
+am_free_parking,amenities,True,True,True,
+am_smoking_allowed,amenities,False,False,False,almost one value (A1)
+am_breakfast,amenities,False,False,False,almost one value (A1)
+dist_to_nearest_attraction_km,tourist,True,False,True,Elastic net: other form of a column (B1)
+dist_exp_decay,tourist,True,True,True,
+avg_sentiment,sentiment,True,False,True,Elastic net: VIF > 10 (B2)
+sentiment_std,sentiment,True,True,True,
+negative_review_pct,sentiment,True,True,True,
+weighted_sentiment,sentiment,True,True,True,
+no_sentiment,sentiment,True,True,True,
