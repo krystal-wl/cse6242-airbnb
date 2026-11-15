@@ -1,13 +1,7 @@
 """Grid-search Random forest hyperparams on 05's RF_FEATURES.
 
-Uses GroupKFold(5) by host (same protocol as 04/05). Default: Toronto Sept snapshot
-(fast if cached). Pass more cities to average MAE across cities.
-
-RF fits are slower than Elastic net — start with Toronto only.
-
-Example:
-    python scripts/tune_random_forest.py
-    python scripts/tune_random_forest.py toronto new-york-city
+Uses GroupKFold(5) by host on the team's **June** snapshots (PINNED_SNAPSHOTS).
+Default: all six cities (mean MAE across cities). Pass a subset to restrict.
 """
 from __future__ import annotations
 
@@ -25,16 +19,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import strfair
+from strfair.config import PINNED_SNAPSHOTS
 from strfair.models import RF_FEATURES, RF_PARAMS, feature_matrix, make_random_forest
 
-SNAPSHOTS = {
-    "new-york-city": "2026-09-14",
-    "los-angeles": "2026-09-14",
-    "toronto": "2026-09-16",
-    "san-diego": "2026-09-20",
-    "clark-county-nv": "2026-09-20",
-    "jersey-city": "2026-09-21",
-}
+# Train/tune on June
+SNAPSHOTS = dict(PINNED_SNAPSHOTS)
 
 # Keep the grid modest: each combo × 5 folds × RF is slow.
 N_ESTIMATORS = [100, 300, 500]
@@ -140,8 +129,8 @@ if __name__ == "__main__":
     p.add_argument(
         "cities",
         nargs="*",
-        default=["toronto"],
-        help="cities to include (default: toronto)",
+        default=list(SNAPSHOTS),
+        help="cities to include (default: all six)",
     )
     args = p.parse_args()
     unknown = [c for c in args.cities if c not in SNAPSHOTS]
