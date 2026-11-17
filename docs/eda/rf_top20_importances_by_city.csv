@@ -1,0 +1,121 @@
+city,snapshot,rank,feature,importance
+new-york-city,2026-06-14,1,accommodates,0.06186561228484817
+new-york-city,2026-06-14,2,shared_bath,0.05186058256959058
+new-york-city,2026-06-14,3,quote_nights,0.04629237938820408
+new-york-city,2026-06-14,4,km_to_centre,0.04282370564227501
+new-york-city,2026-06-14,5,log_km_to_centre,0.038540516592504875
+new-york-city,2026-06-14,6,minimum_nights,0.037986502485408184
+new-york-city,2026-06-14,7,bedrooms,0.03250500957038356
+new-york-city,2026-06-14,8,longitude,0.03198694167155582
+new-york-city,2026-06-14,9,min_nights_band_28+,0.031556026541708866
+new-york-city,2026-06-14,10,is_monthly_quote,0.03090897364332959
+new-york-city,2026-06-14,11,room_type_Private room,0.02877611537018567
+new-york-city,2026-06-14,12,baths,0.028523886676407453
+new-york-city,2026-06-14,13,room_Entire home/apt,0.025508167869094236
+new-york-city,2026-06-14,14,beds,0.025221367941873345
+new-york-city,2026-06-14,15,discount_amount,0.025217310329411206
+new-york-city,2026-06-14,16,has_license,0.02472999285630904
+new-york-city,2026-06-14,17,host_entire_home_share,0.02374434156969645
+new-york-city,2026-06-14,18,lead_days,0.023619105917621827
+new-york-city,2026-06-14,19,room_type_Entire home/apt,0.020818088773893722
+new-york-city,2026-06-14,20,calculated_host_listings_count_private_rooms,0.019561719670624134
+los-angeles,2026-06-15,1,accommodates,0.08807237859362893
+los-angeles,2026-06-15,2,baths,0.08752243930487849
+los-angeles,2026-06-15,3,bedrooms,0.07418327134093906
+los-angeles,2026-06-15,4,beds,0.05486379293783294
+los-angeles,2026-06-15,5,room_Private room,0.03633126444489753
+los-angeles,2026-06-15,6,quote_nights,0.033673263291796075
+los-angeles,2026-06-15,7,room_type_Private room,0.03302932999753842
+los-angeles,2026-06-15,8,room_type_Entire home/apt,0.03290145758268945
+los-angeles,2026-06-15,9,minimum_nights,0.03189171933477853
+los-angeles,2026-06-15,10,room_Entire home/apt,0.0316865324056504
+los-angeles,2026-06-15,11,calculated_host_listings_count_private_rooms,0.02763605809993889
+los-angeles,2026-06-15,12,host_entire_home_share,0.027375672920339326
+los-angeles,2026-06-15,13,is_monthly_quote,0.02569718301736805
+los-angeles,2026-06-15,14,longitude,0.025045177498220543
+los-angeles,2026-06-15,15,min_nights_band_28+,0.023785275818236078
+los-angeles,2026-06-15,16,discount_amount,0.018559672715784306
+los-angeles,2026-06-15,17,shared_bath,0.016612047772064924
+los-angeles,2026-06-15,18,n_amenities,0.014468723060124858
+los-angeles,2026-06-15,19,calculated_host_listings_count_entire_homes,0.01431974892204669
+los-angeles,2026-06-15,20,lead_days,0.01279259121472318
+toronto,2026-06-15,1,quote_nights,0.07235617774555465
+toronto,2026-06-15,2,minimum_nights,0.07121302533869511
+toronto,2026-06-15,3,accommodates,0.06342282562880476
+toronto,2026-06-15,4,is_monthly_quote,0.05386505966154412
+toronto,2026-06-15,5,room_type_Entire home/apt,0.0424424281467366
+toronto,2026-06-15,6,min_nights_band_28+,0.04040588572282466
+toronto,2026-06-15,7,room_type_Private room,0.03733864352957245
+toronto,2026-06-15,8,baths,0.035537781239663176
+toronto,2026-06-15,9,room_Entire home/apt,0.034862277984617
+toronto,2026-06-15,10,room_Private room,0.03384951005724297
+toronto,2026-06-15,11,bedrooms,0.030608699327617006
+toronto,2026-06-15,12,beds,0.029207856542436902
+toronto,2026-06-15,13,host_entire_home_share,0.02852535214022371
+toronto,2026-06-15,14,has_license,0.02662687172260324
+toronto,2026-06-15,15,calculated_host_listings_count_private_rooms,0.025393557801562522
+toronto,2026-06-15,16,discount_amount,0.022901965756473835
+toronto,2026-06-15,17,lead_days,0.021334526874909946
+toronto,2026-06-15,18,log_km_to_centre,0.019340463235600916
+toronto,2026-06-15,19,km_to_centre,0.019205559414736503
+toronto,2026-06-15,20,shared_bath,0.0159310914083671
+san-diego,2026-06-27,1,accommodates,0.1239575227852511
+san-diego,2026-06-27,2,beds,0.08778769115962226
+san-diego,2026-06-27,3,baths,0.0839470974087055
+san-diego,2026-06-27,4,bedrooms,0.08230403580909568
+san-diego,2026-06-27,5,longitude,0.04500365548509353
+san-diego,2026-06-27,6,quote_nights,0.044594731541519377
+san-diego,2026-06-27,7,minimum_nights,0.03967965337993916
+san-diego,2026-06-27,8,min_nights_band_28+,0.03695294427496506
+san-diego,2026-06-27,9,is_monthly_quote,0.026507001411433535
+san-diego,2026-06-27,10,has_license,0.01932192523985397
+san-diego,2026-06-27,11,n_amenities,0.01746691814397581
+san-diego,2026-06-27,12,discount_amount,0.015856492498926407
+san-diego,2026-06-27,13,log_km_to_centre,0.015473364586800134
+san-diego,2026-06-27,14,room_Private room,0.01533407878807461
+san-diego,2026-06-27,15,room_type_Private room,0.015056131891685875
+san-diego,2026-06-27,16,host_entire_home_share,0.014018435877955988
+san-diego,2026-06-27,17,km_to_centre,0.013458508031718684
+san-diego,2026-06-27,18,room_Entire home/apt,0.01314204371973691
+san-diego,2026-06-27,19,shared_bath,0.012957484267227024
+san-diego,2026-06-27,20,latitude,0.012568256243240388
+clark-county-nv,2026-06-27,1,accommodates,0.1039330109557669
+clark-county-nv,2026-06-27,2,quote_nights,0.07473244388407863
+clark-county-nv,2026-06-27,3,beds,0.06746739343922804
+clark-county-nv,2026-06-27,4,minimum_nights,0.06516888576211712
+clark-county-nv,2026-06-27,5,baths,0.06356497407732392
+clark-county-nv,2026-06-27,6,is_monthly_quote,0.05500406036803991
+clark-county-nv,2026-06-27,7,bedrooms,0.04796418078236049
+clark-county-nv,2026-06-27,8,min_nights_band_28+,0.04182197294975072
+clark-county-nv,2026-06-27,9,log_km_to_centre,0.024038187614617415
+clark-county-nv,2026-06-27,10,km_to_centre,0.02209623884021561
+clark-county-nv,2026-06-27,11,shared_bath,0.016304068047741056
+clark-county-nv,2026-06-27,12,property_group_house,0.015689473258806347
+clark-county-nv,2026-06-27,13,guests_per_bedroom,0.013726817114616976
+clark-county-nv,2026-06-27,14,longitude,0.013319617656822094
+clark-county-nv,2026-06-27,15,discount_amount,0.013254896850476991
+clark-county-nv,2026-06-27,16,latitude,0.013220910044619434
+clark-county-nv,2026-06-27,17,guests_per_bed,0.012710028369111778
+clark-county-nv,2026-06-27,18,room_Entire home/apt,0.01235465236851312
+clark-county-nv,2026-06-27,19,n_amenities,0.01207907279323695
+clark-county-nv,2026-06-27,20,months_since_last_review,0.011619936928166182
+jersey-city,2026-06-27,1,accommodates,0.08936143440867451
+jersey-city,2026-06-27,2,room_Entire home/apt,0.06758724375474719
+jersey-city,2026-06-27,3,room_type_Private room,0.05785821519760437
+jersey-city,2026-06-27,4,room_type_Entire home/apt,0.055741072636613806
+jersey-city,2026-06-27,5,room_Private room,0.05404748825972272
+jersey-city,2026-06-27,6,quote_nights,0.053973660891703246
+jersey-city,2026-06-27,7,beds,0.046577604355602424
+jersey-city,2026-06-27,8,minimum_nights,0.04347227828025316
+jersey-city,2026-06-27,9,calculated_host_listings_count_private_rooms,0.043095227507755234
+jersey-city,2026-06-27,10,bedrooms,0.04111092309729132
+jersey-city,2026-06-27,11,host_entire_home_share,0.040659770851324196
+jersey-city,2026-06-27,12,shared_bath,0.0406377797190256
+jersey-city,2026-06-27,13,is_monthly_quote,0.03298261037479825
+jersey-city,2026-06-27,14,min_nights_band_28+,0.025359579326116873
+jersey-city,2026-06-27,15,baths,0.02311266115459758
+jersey-city,2026-06-27,16,has_license,0.019983465544219658
+jersey-city,2026-06-27,17,lead_days,0.018892400262103006
+jersey-city,2026-06-27,18,n_amenities,0.017424415889948638
+jersey-city,2026-06-27,19,calculated_host_listings_count_entire_homes,0.013538069929394958
+jersey-city,2026-06-27,20,discount_amount,0.013340519976928944

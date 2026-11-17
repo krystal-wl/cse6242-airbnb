@@ -45,6 +45,20 @@ from strfair.features import (  # noqa: F401
     build_features,
     feature_families,
 )
+from strfair.tourist import ATTRACTIONS, tourist_features  # noqa: F401
+from strfair.models import (  # noqa: F401
+    CANDIDATES,
+    ENET_FEATURES,
+    ENET_PARAMS,
+    ENET_TUNED,
+    RF_FEATURES,
+    RF_PARAMS,
+    RF_TUNED,
+    TUNED,
+    feature_matrix,
+    make_elastic_net,
+    make_random_forest,
+)
 from strfair.prep import CityData, build, fingerprint, impute_sizes, prepare  # noqa: F401
 
 __version__ = "0.2.0"
