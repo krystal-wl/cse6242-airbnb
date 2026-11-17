@@ -154,8 +154,9 @@ function updateHoodLayer() {
 function onHoodClick(name, lngLat) {
   const a = state.hoodAggs?.get(name);
   const stay = state.filters.stay === 'all' ? '' : state.filters.stay;
-  if (!a) { mapview.showPopup(lngLat, h('div', { class: 'popup' }, h('h3', {}, name), h('p', { class: 'muted small' }, 'No listings shown here with the current filters.'))); return; }
-  mapview.showPopup(lngLat, hoodPopup(a, state.band, stay));
+  if (a) mapview.showPopup(lngLat, hoodPopup(a, state.band, stay));
+  else mapview.showPopup(lngLat, h('div', { class: 'popup' }, h('h3', {}, name), h('p', { class: 'muted small' }, 'No listings shown here with the current filters.')));
+  mapview.setHoodSelected(name);  // after showPopup: closing the previous popup clears the outline
 }
 
 function onHover(id, ev) {

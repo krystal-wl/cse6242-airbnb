@@ -86,7 +86,7 @@ guests, bedrooms, rating, distance to centre. This is the screen the user test e
 | feature | why |
 | ------- | --- |
 | compare basket | the user test |
-| neighbourhood layer: choropleth of median ratio / share over / share under, click for the ratio histogram | the neighbourhood-level view promised to researchers and hosts (proposal Q4) |
+| neighbourhood layer: choropleth of median ratio / share over / share under, click for the ratio histogram (the clicked neighbourhood is outlined while its popup is open) | the neighbourhood-level view promised to researchers and hosts (proposal Q4) |
 | between-release toggle (March 2026) for NYC / LA / Toronto, plus the card line and a "kept their label" share in the metrics strip | commitment 4 |
 | band-width slider (default ±20%) | labels are computed client-side from the ratio, so the slider turns the sensitivity analysis into an interaction at almost no cost |
 | tourist-attraction overlay | Kent's anchor points (`scripts/tourist_area_distance.py`) as context; pairs with the distance feature |

@@ -32,6 +32,9 @@ function addLayers() {
     paint: { 'fill-color': 'rgba(0,0,0,0)', 'fill-opacity': 0.62 } });
   map.addLayer({ id: 'hoods-line', type: 'line', source: 'hoods', layout: { visibility: 'none' },
     paint: { 'line-color': '#52514e', 'line-width': 0.7, 'line-opacity': 0.5 } });
+  map.addLayer({ id: 'hoods-selected', type: 'line', source: 'hoods', layout: { visibility: 'none' },
+    filter: ['==', ['get', 'neighbourhood'], ''],
+    paint: { 'line-color': '#0b0b0b', 'line-width': 2.2, 'line-opacity': 0.9 } });
   map.addLayer({ id: 'points', type: 'circle', source: 'listings',
     paint: { 'circle-radius': radius(), 'circle-color': COLORS.fair, 'circle-opacity': 0.85,
              'circle-stroke-color': '#fcfcfb', 'circle-stroke-width': 0.6, 'circle-stroke-opacity': 0.9 } });
@@ -106,6 +109,7 @@ export function setHoodStyle(colorByName) {
   const on = !!colorByName;
   map.setLayoutProperty('hoods-fill', 'visibility', on ? 'visible' : 'none');
   map.setLayoutProperty('hoods-line', 'visibility', on ? 'visible' : 'none');
+  map.setLayoutProperty('hoods-selected', 'visibility', on ? 'visible' : 'none');
   if (!on) return;
   const pairs = [];
   for (const [name, color] of colorByName) pairs.push(name, color);
@@ -120,6 +124,9 @@ export function showAttractions(on) {
 export function showPopup(lngLat, el) {
   popup?.remove();
   popup = new maplibregl.Popup({ maxWidth: '320px', offset: 6 }).setLngLat(lngLat).setDOMContent(el).addTo(map);
+  popup.on('close', () => setHoodSelected(null));
 }
 export function closePopup() { popup?.remove(); popup = null; }
+// Outline one neighbourhood (the one whose popup is open); null clears it.
+export function setHoodSelected(name) { map.setFilter('hoods-selected', ['==', ['get', 'neighbourhood'], name ?? '']); }
 export function resize() { map?.resize(); }
