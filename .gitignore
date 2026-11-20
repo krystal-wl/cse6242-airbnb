@@ -164,8 +164,8 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
-# mkdocs documentation
-/site
+# mkdocs documentation (template rule, disabled: site/ is the interactive map; only its data/ is ignored, below)
+# /site
 
 # mypy
 .mypy_cache/
@@ -228,3 +228,6 @@ __marimo__/
 #     python scripts/download_data.py <city> [<city> ...]
 data/*
 !data/.gitkeep
+
+# Map data built by scripts/build_map_data.py from data/ (rebuild locally; data/ itself is ignored above)
+site/data/

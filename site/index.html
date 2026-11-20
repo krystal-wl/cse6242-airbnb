@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>STR Fair · Is this Airbnb fairly priced?</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ccircle cx=%278%27 cy=%278%27 r=%277%27 fill=%27%232a78d6%27/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <strong>STR Fair</strong>
+      <span class="sub">Is this Airbnb fairly priced for what it is?</span>
+    </div>
+    <label class="field">City
+      <select id="city-select" aria-label="City"></select>
+    </label>
+    <div id="release-toggle" class="seg" role="group" aria-label="Release" hidden>
+      <button type="button" data-release="current" class="on">Jun 2026</button>
+      <button type="button" data-release="prev">Mar 2026</button>
+    </div>
+    <form id="search" class="search" autocomplete="off">
+      <input id="search-input" type="search" placeholder="Paste an Airbnb listing URL or id" aria-label="Listing URL or id">
+      <button type="submit" class="btn">Find</button>
+      <span id="search-msg" class="msg" role="status"></span>
+    </form>
+    <div class="spacer"></div>
+    <button type="button" id="filters-btn" class="btn ghost small-only">Filters</button>
+    <button type="button" id="compare-btn" class="btn">Compare <span id="compare-count" class="pill">0</span></button>
+    <button type="button" id="about-btn" class="btn ghost">How to read this</button>
+  </header>
+
+  <main class="layout">
+    <aside id="filters" class="panel filters" aria-label="Filters">
+      <section class="legend" aria-label="Legend">
+        <div class="legend-row"><span class="swatch" style="--c:#2a78d6"></span>Underpriced <span class="legend-note">price below benchmark − band</span></div>
+        <div class="legend-row"><span class="swatch" style="--c:#8a8880"></span>Fairly priced <span class="legend-note">within the band</span></div>
+        <div class="legend-row"><span class="swatch" style="--c:#eb6834"></span>Overpriced <span class="legend-note">price above benchmark + band</span></div>
+        <div class="legend-row"><span class="swatch faint" style="--c:#8a8880"></span>Lighter dot: the two models disagree</div>
+      </section>
+
+      <fieldset>
+        <legend>Stay type</legend>
+        <div class="seg" id="stay-seg" role="group">
+          <button type="button" data-stay="nightly" class="on">Nightly</button>
+          <button type="button" data-stay="monthly">Monthly (28+ nights)</button>
+          <button type="button" data-stay="all">All</button>
+        </div>
+        <p class="hint">A monthly quote is a per-night rate after a long-stay discount, roughly half the nightly level, so the two are compared separately.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Room type</legend>
+        <div id="room-types" class="checks"></div>
+      </fieldset>
+
+      <div class="two">
+        <fieldset>
+          <legend>Guests</legend>
+          <select id="guests">
+            <option value="0">Any</option>
+            <option value="2">2+</option><option value="3">3+</option><option value="4">4+</option>
+            <option value="5">5+</option><option value="6">6+</option><option value="8">8+</option>
+          </select>
+        </fieldset>
+        <fieldset>
+          <legend>Bedrooms</legend>
+          <select id="bedrooms">
+            <option value="0">Any</option>
+            <option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option>
+          </select>
+        </fieldset>
+      </div>
+
+      <fieldset>
+        <legend>Price per night</legend>
+        <div class="range">
+          <input id="price-min" type="number" min="0" step="10" placeholder="min" aria-label="Minimum price">
+          <span>to</span>
+          <input id="price-max" type="number" min="0" step="10" placeholder="max" aria-label="Maximum price">
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Label</legend>
+        <div class="checks" id="label-checks">
+          <label><input type="checkbox" data-label="under" checked> Underpriced</label>
+          <label><input type="checkbox" data-label="fair" checked> Fairly priced</label>
+          <label><input type="checkbox" data-label="over" checked> Overpriced</label>
+          <label class="sep"><input type="checkbox" id="confident-only"> Only where both models agree</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Fair band <output id="band-val">±20%</output></legend>
+        <input id="band" type="range" min="5" max="40" step="5" value="20" aria-label="Fair band width">
+        <p class="hint">A listing is "fair" when its price is within this band of the benchmark. Widen it and fewer listings are flagged.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Layers</legend>
+        <div class="checks">
+          <label><input type="checkbox" id="hood-layer"> Neighbourhoods</label>
+          <select id="hood-metric" aria-label="Neighbourhood metric" disabled>
+            <option value="median_ratio">median price ÷ benchmark</option>
+            <option value="share_over">share overpriced</option>
+            <option value="share_under">share underpriced</option>
+            <option value="n">listings shown</option>
+          </select>
+          <div id="hood-legend" class="ramp-legend" hidden></div>
+          <label id="attr-label" hidden><input type="checkbox" id="attr-layer"> Tourist attractions</label>
+        </div>
+      </fieldset>
+
+      <div id="count" class="count"></div>
+      <button type="button" id="reset-btn" class="btn ghost">Reset filters</button>
+    </aside>
+
+    <div class="map-wrap">
+      <div id="map" class="map" role="application" aria-label="Map of listings"></div>
+      <div id="metrics" class="metrics" role="status"></div>
+      <div id="caveat" class="caveat" hidden></div>
+      <div id="loading" class="loading" hidden>Loading…</div>
+    </div>
+
+    <aside id="card" class="panel card" aria-label="Listing" hidden></aside>
+    <div id="tooltip" class="tooltip" hidden></div>
+  </main>
+
+  <section id="compare" class="drawer" aria-label="Compare" hidden></section>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <script type="module" src="app/main.js"></script>
+</body>
+</html>
