@@ -45,7 +45,7 @@ from strfair.tourist_area_distance import build_tourist_area
 
 PROCESSED_DIR = DATA_DIR / "processed"
 _SOURCE_FILES = ["config.py", "data.py", "features.py", "amenities.py", "sentiment.py", "tourist_area_distance.py",
-                 "tourist.py", "prep.py"]
+                 "prep.py"]
 
 
 # ---------------------------------------------------------------------------------------------------------

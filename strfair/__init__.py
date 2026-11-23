@@ -45,7 +45,6 @@ from strfair.features import (  # noqa: F401
     build_features,
     feature_families,
 )
-from strfair.tourist import ATTRACTIONS, tourist_features  # noqa: F401
 from strfair.models import (  # noqa: F401
     CANDIDATES,
     ENET_FEATURES,
