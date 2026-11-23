@@ -1,17 +1,16 @@
-"""Elastic net contributions for each September listing.
+"""Elastic net contributions for each listing.
 
-Run after score_listings.py:  python scripts/explain_en.py jersey-city  (or --all)
+Run after score_listings.py:  python scripts/explain_en.py jersey-city  (or --all; add --release june for June)
 Writes data/results/en_contributions/<city>_<snapshot>.csv
 """
 
-import argparse
 from copy import copy
 
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import GroupKFold
 
-from score_listings import ROOT, SNAPSHOTS, strfair
+from score_listings import ROOT, cities_to_run, strfair
 
 
 def feature_of_column(pre):
@@ -90,8 +89,7 @@ def from_stay_type_base(rows, monthly, groups):
     return out.join(feature_log)
 
 
-def explain_city(city, groups):
-    snapshot = SNAPSHOTS[city]
+def explain_city(city, snapshot, groups):
     data = strfair.prepare(city, snapshot)
     features = data.features.set_index("id")
     X = strfair.feature_matrix(features, strfair.ENET_FEATURES)
@@ -128,15 +126,8 @@ def explain_city(city, groups):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("city", nargs="?", choices=SNAPSHOTS)
-    parser.add_argument("--all", action="store_true")
-    args = parser.parse_args()
-    cities = list(SNAPSHOTS) if args.all else [args.city]
-    if cities == [None]:
-        parser.error("give a city or --all")
-
+    runs = cities_to_run()
     decisions = pd.read_csv(ROOT / "docs/eda/feature_lists/decisions.csv")
     groups = decisions.set_index("column")["group"]
-    for city in cities:
-        explain_city(city, groups)
+    for city, snapshot in runs:
+        explain_city(city, snapshot, groups)

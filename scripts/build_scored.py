@@ -1,17 +1,16 @@
 """Build the table the map reads from the model outputs (replaces stub_scores.py).
 
-Run after score_listings.py and explain_en.py:  python scripts/build_scored.py jersey-city  (or --all)
+Run after score_listings.py and explain_en.py:  python scripts/build_scored.py jersey-city  (or --all; add --release june)
 Writes data/scored/<city>_<snapshot>/scored.parquet and meta.json
 """
 
-import argparse
 import json
 
 import numpy as np
 import pandas as pd
 
 from explain_en import waterfall
-from score_listings import ROOT, SNAPSHOTS, strfair
+from score_listings import ROOT, cities_to_run, strfair
 from stub_scores import comparables
 
 RESULTS = strfair.DATA_DIR / "results"
@@ -119,8 +118,7 @@ def contribution_lists(explain, table):
     return out
 
 
-def build(city):
-    snapshot = SNAPSHOTS[city]
+def build(city, snapshot):
     data = strfair.prepare(city, snapshot)
     S, F = data.sample, data.features  # same rows, same order; S has the name, URL and neighbourhood name
     ids = F["id"]
@@ -188,12 +186,5 @@ def build(city):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("city", nargs="?", choices=SNAPSHOTS)
-    parser.add_argument("--all", action="store_true")
-    args = parser.parse_args()
-    cities = list(SNAPSHOTS) if args.all else [args.city]
-    if cities == [None]:
-        parser.error("give a city or --all")
-    for city in cities:
-        build(city)
+    for city, snapshot in cities_to_run():
+        build(city, snapshot)
