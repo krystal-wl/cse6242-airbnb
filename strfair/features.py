@@ -31,7 +31,6 @@ import numpy as np
 import pandas as pd
 
 from strfair.amenities import AMENITY_FLAGS, AMENITY_GROUPS, amenity_features, parse_amenities  # noqa: F401
-from strfair.tourist import ATTRACTIONS, tourist_features  # noqa: F401
 
 # ---------------------------------------------------------------------------------------------------------
 # Reference tables
@@ -298,7 +297,6 @@ FAMILIES: dict[str, Callable[..., pd.DataFrame]] = {
     "target_quote": target_and_quote_features,
     "size": size_features,
     "location": location_features,
-    "tourist": tourist_features,
     "host": host_features,
     "reviews": review_features,
     "listing_text": listing_text_features,
@@ -318,12 +316,7 @@ def build_features(df: pd.DataFrame, city: str | None = None, families: list[str
     parts = [df[[c for c in ID_COLS if c in df]].copy()]
     for name in (list(FAMILIES) if families is None else families):
         fn = FAMILIES[name]
-        if name == "location":
-            parts.append(fn(df, city, min_neighbourhood_n))
-        elif name == "tourist":
-            parts.append(fn(df, city))
-        else:
-            parts.append(fn(df))
+        parts.append(fn(df, city, min_neighbourhood_n) if name == "location" else fn(df))
     out = pd.concat(parts, axis=1)
     out = out.loc[:, ~out.columns.duplicated()]
     if {"price", "accommodates"} <= set(out.columns):  # Wang & Nicolau (2017) target, as a variant
@@ -331,13 +324,11 @@ def build_features(df: pd.DataFrame, city: str | None = None, families: list[str
     return out
 
 
-def feature_families(df: pd.DataFrame, city: str | None = None) -> pd.Series:
+def feature_families(df: pd.DataFrame) -> pd.Series:
     """Map every feature column produced for ``df`` to the family (builder) it came from."""
     fam = {}
-    city = city or (df["city"].iloc[0] if "city" in df and len(df) else None)
     for name, fn in FAMILIES.items():
-        cols = fn(df, city).columns if name in ("location", "tourist") else fn(df).columns
-        for c in cols:
+        for c in fn(df).columns:
             fam.setdefault(c, name)
     return pd.Series(fam, name="family")
 
