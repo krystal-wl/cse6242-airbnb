@@ -1,0 +1,140 @@
+[
+ {
+  "slug": "new-york-city",
+  "name": "New York City",
+  "snapshot": "2026-09-14",
+  "prev_snapshot": "2026-06-14",
+  "center": [
+   -73.9855,
+   40.758
+  ],
+  "bounds": [
+   -74.0864,
+   40.5855,
+   -73.7436,
+   40.8711
+  ],
+  "n": 19396,
+  "stub": false,
+  "files": {
+   "listings": "new-york-city_2026-09-14.json",
+   "metrics": "new-york-city_2026-09-14.metrics.json",
+   "geojson": "new-york-city.neighbourhoods.geojson"
+  }
+ },
+ {
+  "slug": "los-angeles",
+  "name": "Los Angeles",
+  "snapshot": "2026-09-14",
+  "prev_snapshot": "2026-06-15",
+  "center": [
+   -118.2437,
+   34.0522
+  ],
+  "bounds": [
+   -118.7218,
+   33.747,
+   -117.833,
+   34.6614
+  ],
+  "n": 36663,
+  "stub": false,
+  "files": {
+   "listings": "los-angeles_2026-09-14.json",
+   "metrics": "los-angeles_2026-09-14.metrics.json",
+   "geojson": "los-angeles.neighbourhoods.geojson"
+  }
+ },
+ {
+  "slug": "toronto",
+  "name": "Toronto",
+  "snapshot": "2026-09-16",
+  "prev_snapshot": "2026-06-15",
+  "center": [
+   -79.3806,
+   43.6453
+  ],
+  "bounds": [
+   -79.5701,
+   43.6041,
+   -79.1855,
+   43.8094
+  ],
+  "n": 16760,
+  "stub": false,
+  "files": {
+   "listings": "toronto_2026-09-16.json",
+   "metrics": "toronto_2026-09-16.metrics.json",
+   "geojson": "toronto.neighbourhoods.geojson"
+  }
+ },
+ {
+  "slug": "san-diego",
+  "name": "San Diego",
+  "snapshot": "2026-09-20",
+  "prev_snapshot": "2026-06-27",
+  "center": [
+   -117.1611,
+   32.7157
+  ],
+  "bounds": [
+   -117.2786,
+   32.6132,
+   -117.015,
+   32.977
+  ],
+  "n": 11614,
+  "stub": false,
+  "files": {
+   "listings": "san-diego_2026-09-20.json",
+   "metrics": "san-diego_2026-09-20.metrics.json",
+   "geojson": "san-diego.neighbourhoods.geojson"
+  }
+ },
+ {
+  "slug": "clark-county-nv",
+  "name": "Las Vegas (Clark County)",
+  "snapshot": "2026-09-20",
+  "prev_snapshot": "2026-06-27",
+  "center": [
+   -115.1728,
+   36.1147
+  ],
+  "bounds": [
+   -115.3122,
+   35.9908,
+   -114.0911,
+   36.8011
+  ],
+  "n": 17440,
+  "stub": false,
+  "files": {
+   "listings": "clark-county-nv_2026-09-20.json",
+   "metrics": "clark-county-nv_2026-09-20.metrics.json",
+   "geojson": "clark-county-nv.neighbourhoods.geojson"
+  }
+ },
+ {
+  "slug": "jersey-city",
+  "name": "Jersey City",
+  "snapshot": "2026-09-21",
+  "prev_snapshot": "2026-06-27",
+  "center": [
+   -74.0333,
+   40.7169
+  ],
+  "bounds": [
+   -74.0982,
+   40.6915,
+   -74.0359,
+   40.7575
+  ],
+  "n": 2093,
+  "stub": false,
+  "files": {
+   "listings": "jersey-city_2026-09-21.json",
+   "metrics": "jersey-city_2026-09-21.metrics.json",
+   "geojson": "jersey-city.neighbourhoods.geojson"
+  }
+ }
+]

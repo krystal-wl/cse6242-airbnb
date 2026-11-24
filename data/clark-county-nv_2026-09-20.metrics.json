@@ -1,0 +1,43 @@
+{
+ "n": 17440,
+ "band": 0.2,
+ "median_price": 229.6,
+ "base_price": {
+  "nightly": 264.0182507635777,
+  "monthly": 92.6387920344097
+ },
+ "monthly_share": 0.18056192660550457,
+ "models": {
+  "interp": {
+   "mae_usd": 120.38425755488268,
+   "median_abs_err_usd": 53.983271499534744,
+   "median_abs_pct_err": 0.26154556275201224,
+   "label_share": {
+    "fair": 0.4033,
+    "under": 0.3015,
+    "over": 0.2952
+   }
+  },
+  "ens": {
+   "mae_usd": 105.5965118780984,
+   "median_abs_err_usd": 47.49249398168049,
+   "median_abs_pct_err": 0.23051737788336982,
+   "label_share": {
+    "fair": 0.4576,
+    "under": 0.2851,
+    "over": 0.2573
+   }
+  }
+ },
+ "agreement_share": 0.6478211009174312,
+ "nightly": {
+  "n": 14291,
+  "median_abs_err_usd": 65.72700857886593
+ },
+ "previous": {
+  "snapshot": "2026-06-27",
+  "n_both": 15103,
+  "kept_label_share": 0.6590743560881944,
+  "flipped_extreme_share": 0.02933192081043501
+ }
+}
