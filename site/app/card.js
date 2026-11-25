@@ -15,7 +15,7 @@ export function closeCard() {
 }
 
 export function renderCard(row) {
-  const { band, city } = state;
+  const { band, city, control } = state;
   const v = verdict(row, band, 'current');
   const gapUsd = row.price - row.fair_i;
   const card = $card();
@@ -30,7 +30,10 @@ export function renderCard(row) {
   const agreeText = v.confident
     ? `Both models agree (random forest benchmark ${fmtUsd(row.fair_e)}).`
     : `The two models disagree: the random forest puts the benchmark at ${fmtUsd(row.fair_e)}, which would make it ${LABEL_TEXT[v.labelEns].toLowerCase()}.`;
-  const verdictBlock = h('div', { class: 'block' },
+  const verdictBlock = control
+    ? h('div', { class: 'block' }, h('div', { class: 'verdict' },
+        h('div', {}, h('div', { class: 'lbl' }, 'Quoted per night'), h('div', { class: 'big' }, fmtUsd(row.price)))))
+    : h('div', { class: 'block' },
     h('div', { class: 'verdict' },
       h('div', {}, h('div', { class: 'lbl' }, 'Quoted per night'), h('div', { class: 'big' }, fmtUsd(row.price))),
       h('div', {}, h('div', { class: 'lbl' }, 'Benchmark for a place like this'), h('div', { class: 'big' }, fmtUsd(row.fair_i))),
@@ -38,7 +41,11 @@ export function renderCard(row) {
     ),
     h('p', { class: 'agree' }, agreeText));
 
-  const quote = row.monthly
+  const quote = control
+    ? (row.monthly
+      ? `This is a monthly quote: ${plural(row.nights, 'night')} from ${fmtDate(row.checkin)}, so the rate is per night after a long-stay discount.`
+      : `This quote was for ${plural(row.nights, 'night')} from ${fmtDate(row.checkin)}, captured ${plural(row.lead, 'day')} ahead; the price on another date may differ.`)
+    : row.monthly
     ? `This is a monthly quote: ${plural(row.nights, 'night')} from ${fmtDate(row.checkin)}, so the rate is per night after a long-stay discount. It is compared with other monthly quotes only.`
     : `This quote was for ${plural(row.nights, 'night')} from ${fmtDate(row.checkin)}, captured ${plural(row.lead, 'day')} ahead. The benchmark controls for that timing; the price on another date may differ.`;
   const quoteBlock = h('div', { class: 'block' }, h('h3', {}, 'The quote'), h('p', { class: 'quote-ctx' }, quote));
@@ -68,12 +75,12 @@ export function renderCard(row) {
   const comps = (row.comps || []).map(id => state.byId.get(id)).filter(Boolean);
   if (comps.length) {
     const table = h('table', { class: 'comps' },
-      h('thead', {}, h('tr', {}, h('th', {}, 'Listing'), h('th', { class: 'num' }, 'Price'), h('th', { class: 'num' }, 'Benchmark'), h('th', { class: 'num' }, 'vs.'))),
+      h('thead', {}, h('tr', {}, h('th', {}, 'Listing'), h('th', { class: 'num' }, 'Price'), !control && h('th', { class: 'num' }, 'Benchmark'), !control && h('th', { class: 'num' }, 'vs.'))),
       h('tbody', {}, ...comps.map(c => {
         const cv = verdict(c, band, 'current');
         return h('tr', { class: 'row', onclick: () => emit('select', c.id) },
-          h('td', { class: 'name', title: c.name }, h('span', { class: 'dot', style: { '--c': COLORS[cv.label] } }), c.name),
-          h('td', { class: 'num' }, fmtUsd(c.price)), h('td', { class: 'num' }, fmtUsd(c.fair_i)), h('td', { class: 'num' }, fmtPct(cv.ratio)));
+          h('td', { class: 'name', title: c.name }, !control && h('span', { class: 'dot', style: { '--c': COLORS[cv.label] } }), c.name),
+          h('td', { class: 'num' }, fmtUsd(c.price)), !control && h('td', { class: 'num' }, fmtUsd(c.fair_i)), !control && h('td', { class: 'num' }, fmtPct(cv.ratio)));
       })));
     compsBlock.append(table, h('p', { class: 'hint' }, `Same room type and stay type, bedrooms within one, nearest first. Click a row to open it.`));
   } else {
@@ -81,7 +88,7 @@ export function renderCard(row) {
   }
 
   let prevBlock = null;
-  if (city.prev_snapshot) {
+  if (city.prev_snapshot && !control) {
     const prevMonth = fmtMonth(city.prev_snapshot), curMonth = fmtMonth(city.snapshot);
     if (row.r_i_prev != null) {
       const pv = verdict(row, band, 'prev');
@@ -109,8 +116,12 @@ export function renderCard(row) {
     h('button', { class: 'btn ' + (pinned ? '' : 'primary'), onclick: () => emit('toggle-compare', row.id) }, pinned ? 'Unpin from compare' : 'Pin to compare'),
     h('button', { class: 'btn ghost', onclick: () => { navigator.clipboard?.writeText(location.href); } }, 'Copy link'));
 
-  card.replaceChildren(...[head, verdictBlock, quoteBlock, whyBlock, listingBlock, compsBlock, prevBlock, hoodBlock, actions].filter(Boolean));
+  // control-group view: price, quote, the listing and similar listings; nothing derived from the models
+  const blocks = control ? [head, verdictBlock, quoteBlock, listingBlock, compsBlock, actions]
+    : [head, verdictBlock, quoteBlock, whyBlock, listingBlock, compsBlock, prevBlock, hoodBlock, actions];
+  card.replaceChildren(...blocks.filter(Boolean));
   card.scrollTop = keepScroll;
+  if (control) return;
 
   waterfall(chart, {
     base, baseLabel: `Typical ${stayWord} listing in ${city.name}`,

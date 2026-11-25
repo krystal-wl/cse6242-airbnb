@@ -2,6 +2,10 @@
 const listeners = new Map();
 
 export const state = {
+  // Control-group view for the user test, opened with ?v=b: the same map, filters and listings, with every
+  // model output (benchmark, labels, ratios, waterfall) left out. A link parameter, not a control on the
+  // page, so a participant cannot switch it; the name says nothing about which group the link is for.
+  control: new URLSearchParams(location.search).get('v') === 'b',
   cities: [], city: null,            // city = the entry from cities.json
   rows: [], byId: new Map(), visible: [], metrics: null, geojson: null, attractions: null,
   band: 0.20, release: 'current',
