@@ -12,12 +12,12 @@
   <header class="topbar">
     <div class="brand">
       <strong>STR Fair</strong>
-      <span class="sub">Is this Airbnb fairly priced for what it is?</span>
+      <span class="sub" id="brand-sub">Is this Airbnb fairly priced for what it is?</span>
     </div>
     <label class="field">City
       <select id="city-select" aria-label="City"></select>
     </label>
-    <div id="release-toggle" class="seg" role="group" aria-label="Release" hidden>
+    <div id="release-toggle" class="seg model-only" role="group" aria-label="Release" hidden>
       <button type="button" data-release="current" class="on">Jun 2026</button>
       <button type="button" data-release="prev">Mar 2026</button>
     </div>
@@ -34,7 +34,7 @@
 
   <main class="layout">
     <aside id="filters" class="panel filters" aria-label="Filters">
-      <section class="legend" aria-label="Legend">
+      <section class="legend model-only" aria-label="Legend">
         <div class="legend-row"><span class="swatch" style="--c:#2a78d6"></span>Underpriced <span class="legend-note">price below benchmark − band</span></div>
         <div class="legend-row"><span class="swatch" style="--c:#8a8880"></span>Fairly priced <span class="legend-note">within the band</span></div>
         <div class="legend-row"><span class="swatch" style="--c:#eb6834"></span>Overpriced <span class="legend-note">price above benchmark + band</span></div>
@@ -83,7 +83,7 @@
         </div>
       </fieldset>
 
-      <fieldset>
+      <fieldset class="model-only">
         <legend>Label</legend>
         <div class="checks" id="label-checks">
           <label><input type="checkbox" data-label="under" checked> Underpriced</label>
@@ -93,7 +93,7 @@
         </div>
       </fieldset>
 
-      <fieldset>
+      <fieldset class="model-only">
         <legend>Fair band <output id="band-val">±20%</output></legend>
         <input id="band" type="range" min="5" max="40" step="5" value="20" aria-label="Fair band width">
         <p class="hint">A listing is "fair" when its price is within this band of the benchmark. Widen it and fewer listings are flagged.</p>
@@ -103,7 +103,7 @@
         <legend>Layers</legend>
         <div class="checks">
           <label><input type="checkbox" id="hood-layer"> Neighbourhoods</label>
-          <select id="hood-metric" aria-label="Neighbourhood metric" disabled>
+          <select id="hood-metric" class="model-only" aria-label="Neighbourhood metric" disabled>
             <option value="median_ratio">median price ÷ benchmark</option>
             <option value="share_over">share overpriced</option>
             <option value="share_under">share underpriced</option>
