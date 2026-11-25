@@ -274,6 +274,12 @@ slider. Paste an Airbnb listing URL or id in the search box to jump to it. The
 map reads only the scored table: `scripts/stub_scores.py <city> <snapshot>`
 writes a placeholder one in the same format when the models have not been run.
 
+For the user test, adding `?v=b` to the address (`http://localhost:8765/?v=b`) opens the
+control-group view: the same map, filters, listing facts, prices and compare
+basket, with every model output left out (benchmark, labels, waterfall, fair
+band, between-release view). The scores are still in the files the page loads;
+they are only not shown.
+
 ## Docs
 
 - [`docs/pipeline.md`](docs/pipeline.md): the preprocessing every notebook

@@ -89,7 +89,14 @@ export function setPoints(rows, release) {
   map.getSource('listings').setData({ type: 'FeatureCollection', features });
 }
 
-export function setBand(band) {
+const PLAIN = '#4f6478';  // control-group view: every dot the same, no label colours
+
+export function setBand(band, control = false) {
+  if (control) {
+    map.setPaintProperty('points', 'circle-color', PLAIN);
+    map.setPaintProperty('points', 'circle-opacity', 0.8);
+    return;
+  }
   map.setPaintProperty('points', 'circle-color', ['match', labelIdx('r', band), 0, COLORS.under, 2, COLORS.over, COLORS.fair]);
   map.setPaintProperty('points', 'circle-opacity', ['case', ['==', labelIdx('r', band), labelIdx('re', band)], 0.88, 0.38]);
 }

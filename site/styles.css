@@ -22,6 +22,8 @@
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+/* control-group view (?v=b): the parts of the page that exist only to show model output */
+.control .model-only { display: none !important; }
 html, body { height: 100%; margin: 0; background: var(--plane); }
 body { display: flex; flex-direction: column; overflow: hidden; }
 h2, h3 { margin: 0; font-weight: 600; }

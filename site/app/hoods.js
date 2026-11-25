@@ -1,7 +1,7 @@
 // Neighbourhood aggregates are computed in the browser from the rows currently shown, so they follow the filters and the band.
 import { labelOf, COLORS } from './labels.js';
 import { ratiosOf } from './labels.js';
-import { fmtInt, fmtShare, fmtRatio, h } from './format.js';
+import { fmtInt, fmtShare, fmtRatio, fmtUsd, h } from './format.js';
 import { histogram } from './charts.js';
 
 export const MIN_N = 5;
@@ -9,17 +9,19 @@ export const MIN_N = 5;
 export function aggregate(rows, band, release) {
   const m = new Map();
   for (const r of rows) {
-    const { ri } = ratiosOf(r, release);
+    const { ri, price } = ratiosOf(r, release);
     if (ri == null) continue;
     let a = m.get(r.hood);
-    if (!a) m.set(r.hood, a = { hood: r.hood, ratios: [], under: 0, over: 0 });
+    if (!a) m.set(r.hood, a = { hood: r.hood, ratios: [], prices: [], under: 0, over: 0 });
     a.ratios.push(ri);
+    a.prices.push(price);
     const l = labelOf(ri, band);
     if (l === 'under') a.under++; else if (l === 'over') a.over++;
   }
   for (const a of m.values()) {
     a.n = a.ratios.length;
     a.median_ratio = d3.median(a.ratios);
+    a.median_price = d3.median(a.prices);
     a.share_under = a.under / a.n;
     a.share_over = a.over / a.n;
   }
@@ -53,7 +55,14 @@ export function renderLegend(el, info) {
   );
 }
 
-export function hoodPopup(a, band, stayText) {
+export function hoodPopup(a, band, stayText, control = false) {
+  if (control) {  // control-group view: counts and prices only
+    return h('div', { class: 'popup' },
+      h('h3', {}, a.hood),
+      h('div', { class: 'facts' },
+        h('span', {}, h('b', {}, fmtInt(a.n)), ` ${stayText} listings shown`),
+        h('span', {}, 'median price ', h('b', {}, fmtUsd(a.median_price)), ' per night')));
+  }
   const el = h('div', { class: 'popup' },
     h('h3', {}, a.hood),
     h('div', { class: 'facts' },

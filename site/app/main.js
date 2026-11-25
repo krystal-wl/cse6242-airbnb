@@ -12,6 +12,12 @@ import { showTip, hideTip } from './tooltip.js';
 const $ = s => document.querySelector(s);
 
 async function boot() {
+  if (state.control) {  // control-group view: see state.js
+    document.body.classList.add('control');
+    document.title = 'STR Fair';
+    $('#brand-sub').textContent = 'Airbnb listings and their quoted prices';
+    state.layers.hoodMetric = 'n';
+  }
   initFilters();
   try {
     state.cities = await loadCities();
@@ -62,7 +68,7 @@ async function selectCity(slug, hash) {
   $('#loading').hidden = true; $('#map').classList.remove('dim');
   updateHash();
   const id = hash?.get('id');
-  if (hash?.get('release') === 'prev' && meta.prev_snapshot) setRelease('prev');
+  if (hash?.get('release') === 'prev' && meta.prev_snapshot && !state.control) setRelease('prev');
   if (id && state.byId.has(id)) emit('select', id);
 }
 
@@ -70,7 +76,7 @@ function refresh() {
   const rows = visibleRows();
   state.visible = rows;
   mapview.setPoints(rows, state.release);
-  mapview.setBand(state.band);
+  mapview.setBand(state.band, state.control);
   renderCount(rows.length, state.rows.length);
   if (state.layers.hoods) updateHoodLayer(); else state.hoodAggs = null;
   if (state.selectedId && state.byId.has(state.selectedId)) renderCard(state.byId.get(state.selectedId));
@@ -154,7 +160,7 @@ function updateHoodLayer() {
 function onHoodClick(name, lngLat) {
   const a = state.hoodAggs?.get(name);
   const stay = state.filters.stay === 'all' ? '' : state.filters.stay;
-  if (a) mapview.showPopup(lngLat, hoodPopup(a, state.band, stay));
+  if (a) mapview.showPopup(lngLat, hoodPopup(a, state.band, stay, state.control));
   else mapview.showPopup(lngLat, h('div', { class: 'popup' }, h('h3', {}, name), h('p', { class: 'muted small' }, 'No listings shown here with the current filters.')));
   mapview.setHoodSelected(name);  // after showPopup: closing the previous popup clears the outline
 }
@@ -163,6 +169,13 @@ function onHover(id, ev) {
   if (!id) { hideTip(); return; }
   const r = state.byId.get(id); if (!r) return;
   const v = verdict(r, state.band, state.release);
+  if (state.control) {
+    showTip(ev.clientX, ev.clientY, t => {
+      t.append(h('b', {}, r.name), h('br'), `${fmtUsd(v.price)} quoted`, h('br'),
+        h('span', { class: 'sub' }, `${r.room}, sleeps ${r.guests}${r.monthly ? ' · monthly quote' : ''}`));
+    });
+    return;
+  }
   showTip(ev.clientX, ev.clientY, t => {
     t.append(h('b', {}, r.name), h('br'),
       `${fmtUsd(v.price)} quoted · benchmark ${fmtUsd(v.fair)} · `, h('b', {}, fmtPct(v.ratio)), h('br'),
@@ -176,10 +189,13 @@ function renderMetrics() {
   const parts = [
     h('b', {}, c.name), ` · ${fmtDate(c.snapshot)} snapshot · `,
     h('b', {}, fmtInt(m.n)), ' priced listings, ', h('b', {}, fmtInt(state.visible.length)), ' shown',
+  ];
+  if (state.control) { el.replaceChildren(...parts); return; }
+  parts.push(
     ' · typical benchmark error ', h('b', {}, '±' + fmtUsd(m.nightly?.median_abs_err_usd)), '/night',
     ' · fair ', h('b', {}, fmtShare(shareAt(state.band))),
     ' · models agree ', h('b', {}, fmtShare(agreeAt(state.band))),
-  ];
+  );
   if (m.previous?.kept_label_share != null) parts.push(' · ', h('b', {}, fmtShare(keptAt(state.band))), ` kept their label since ${fmtMonth(m.previous.snapshot)}`);
   if (state.stub) parts.push(h('span', { class: 'stub' }, 'Placeholder scores from scripts/stub_scores.py: the team\'s models replace them.'));
   el.replaceChildren(...parts);
@@ -196,6 +212,14 @@ function renderCaveat() {
   let collapsed = document.getElementById('map').clientWidth < 900;
   try { const saved = localStorage.getItem('strfair-caveat'); if (saved != null) collapsed = saved === '1'; } catch {}
   el.classList.toggle('collapsed', collapsed);
+  if (state.control) {
+    el.replaceChildren(
+      h('div', { class: 'head' }, 'How to read this map', h('span', { class: 'muted' }, collapsed ? '▸' : '▾')),
+      h('div', { class: 'body' },
+        h('p', {}, `Each dot is a listing with a price in the ${fmtMonth(c.snapshot)} Inside Airbnb snapshot of ${c.name}.`),
+        h('p', {}, 'Each listing has one dated quote, not a rate card: the price on another date may differ.')));
+    return;
+  }
   el.replaceChildren(
     h('div', { class: 'head' }, 'How to read this map', h('span', { class: 'muted' }, collapsed ? '▸' : '▾')),
     h('div', { class: 'body' },
