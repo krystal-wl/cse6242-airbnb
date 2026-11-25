@@ -1,11 +1,14 @@
 """Turn a scored table into the files the map reads (docs/map_design.md §5).
 
-    python scripts/build_map_data.py san-diego                  # pinned snapshot, previous release if scored
-    python scripts/build_map_data.py new-york-city 2026-06-14 --prev 2026-03-16
-    python scripts/build_map_data.py --all                      # every city in strfair.PINNED_SNAPSHOTS
+    python scripts/build_map_data.py --all                      # six cities: September 2026, June as previous release
+    python scripts/build_map_data.py san-diego                  # one city, same two releases
+    python scripts/build_map_data.py new-york-city 2026-06-14 --prev 2026-03-16   # any other pair of scored releases
 
-Reads ``data/scored/<city>_<snapshot>/scored.parquet`` (the contract written by the modelling notebooks,
-or by ``scripts/stub_scores.py`` until they exist) and writes under ``site/data/``:
+The dates come from ``RELEASES`` in ``scripts/score_listings.py``: September is what the map shows (the
+release the results are reported on), June is the previous release for the between-release view.
+
+Reads ``data/scored/<city>_<snapshot>/scored.parquet`` (the contract written by ``scripts/build_scored.py``,
+or by the placeholder ``scripts/stub_scores.py``) and writes under ``site/data/``:
 
     <city>_<snapshot>.json              the scored table, column-oriented, one array per column
     <city>_<snapshot>.metrics.json      listings, error per model, label shares, model agreement, release stability
@@ -29,6 +32,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 import strfair  # noqa: E402
+from score_listings import RELEASES  # noqa: E402
 from strfair.features import CITY_CENTRES  # noqa: E402
 
 SCORED_DIR = REPO_ROOT / "data" / "scored"
@@ -78,7 +82,7 @@ def _col(series: pd.Series, nd: int | None) -> list:
 def load_scored(city: str, snapshot: str) -> pd.DataFrame:
     path = SCORED_DIR / f"{city}_{snapshot}" / "scored.parquet"
     if not path.exists():
-        raise SystemExit(f"no scored table at {path}; run the modelling notebook or scripts/stub_scores.py {city} {snapshot}")
+        raise SystemExit(f"no scored table at {path}; run scripts/build_scored.py for this release (or scripts/stub_scores.py {city} {snapshot})")
     df = pd.read_parquet(path)
     df["id"] = df["id"].astype(str)
     return df
@@ -173,15 +177,17 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("city", nargs="?")
     ap.add_argument("snapshot", nargs="?")
-    ap.add_argument("--prev", help="earlier priced release for the between-release view (default: strfair.STABILITY_SNAPSHOTS)")
+    ap.add_argument("--prev", help="earlier priced release for the between-release view (default: the city's June release)")
     ap.add_argument("--band", type=float, default=DEFAULT_BAND, help="fair band for the metrics file (the map has its own slider)")
     ap.add_argument("--all", action="store_true")
     args = ap.parse_args()
+    current, previous = RELEASES["september"], RELEASES["june"]
     if args.all:
-        jobs = [(c, s, strfair.STABILITY_SNAPSHOTS.get(c)) for c, s in strfair.PINNED_SNAPSHOTS.items()]
+        jobs = [(c, s, previous.get(c)) for c, s in current.items()]
     elif args.city:
-        snap = args.snapshot or strfair.PINNED_SNAPSHOTS[args.city]
-        jobs = [(args.city, snap, args.prev or strfair.STABILITY_SNAPSHOTS.get(args.city))]
+        snap = args.snapshot or current[args.city]
+        prev = args.prev or previous.get(args.city)
+        jobs = [(args.city, snap, prev if prev != snap else None)]  # a release is never its own previous one
     else:
         ap.error("give a city or --all")
     for city, snap, prev in jobs:

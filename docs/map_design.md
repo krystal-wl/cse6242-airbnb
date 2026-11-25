@@ -5,6 +5,11 @@
 placeholder scores (`scripts/stub_scores.py`); §5 is the contract the modelling notebooks fill. The README
 says how to run it.*
 
+*Update 2026-11-23: the map shows the **September 2026** release of all six cities, the release the results
+are reported on, with **June 2026** as the previous release (June was used for tuning). March 2026 is
+dropped: only three cities have prices in it. The real scores come from `scripts/build_scored.py`. The
+listing counts in §1 and the plan in §7 are the original June figures and dates.*
+
 The proposal defines the map in one sentence: for any listing a traveler is looking at, what would a
 comparable place in this part of the city typically cost per night for similar dates, and is this listing
 cheaper, about the same, or more expensive than that? The answer has three parts, and every screen of the map
@@ -20,8 +25,8 @@ Four commitments in the proposal's engineering text constrain the design:
    fixed set.
 3. A confident label is shown only when the price sits outside the band under **every model variant**, and
    the data's limitations are **stated in the interface itself**.
-4. The final check requires the map deployed **with the between-release view** (March vs June 2026 for New
-   York City, Los Angeles and Toronto).
+4. The final check requires the map deployed **with the between-release view** (June vs September 2026, all six
+   cities).
 
 The user test (decision speed, picking the better-value option with vs without the tool, inaction rate) adds
 a fifth: the map must support *choosing between a few candidate listings*, not only reading one.
@@ -29,7 +34,8 @@ a fifth: the map must support *choosing between a few candidate listings*, not o
 ## 1. One city at a time
 
 Cities are modelled separately and never pooled (`docs/pipeline.md`), so the map shows one city at a time
-from its pinned snapshot (`strfair.PINNED_SNAPSHOTS`, all June 2026) and the user switches city explicitly.
+from its September 2026 snapshot (`RELEASES` in `scripts/score_listings.py`) and the user switches city
+explicitly.
 Nothing on the map compares across cities. Listing counts set the performance budget:
 
 | city            | snapshot   | in-sample listings | monthly (28+ night) quotes |
@@ -59,7 +65,7 @@ city metrics strip at the bottom, and a persistent "how to read this" caveat pan
 | why | a small waterfall from the city median to this listing's benchmark: the 5 largest contributions in dollars (e.g. kitchen +$31, private room −$57, 1.2 km further from centre −$4), then "everything else" |
 | the listing | room type, guests, bedrooms, baths, rating, review count, superhost; a link to the listing on Airbnb |
 | comparables | the 5 most similar listings (same room type, bedrooms ±1, within 1 km, nightly or monthly to match): their price, benchmark and ratio, each clickable. "Relative to similar places" has to be visible, not only a model number |
-| between releases | for NYC / LA / Toronto listings priced in March 2026 too: the March label and whether it agrees |
+| between releases | for listings priced in June 2026 too: the June label and whether it agrees |
 | pin | adds the listing to the compare basket |
 
 **2.3 Compare basket.** Up to 5 pinned listings side by side: price, benchmark, ratio, label, confidence,
@@ -87,7 +93,7 @@ guests, bedrooms, rating, distance to centre. This is the screen the user test e
 | ------- | --- |
 | compare basket | the user test |
 | neighbourhood layer: choropleth of median ratio / share over / share under, click for the ratio histogram (the clicked neighbourhood is outlined while its popup is open) | the neighbourhood-level view promised to researchers and hosts (proposal Q4) |
-| between-release toggle (March 2026) for NYC / LA / Toronto, plus the card line and a "kept their label" share in the metrics strip | commitment 4 |
+| between-release toggle (June 2026), plus the card line and a "kept their label" share in the metrics strip | commitment 4 |
 | band-width slider (default ±20%) | labels are computed client-side from the ratio, so the slider turns the sensitivity analysis into an interaction at almost no cost |
 | tourist-attraction overlay | Kent's anchor points (`scripts/tourist_area_distance.py`) as context; pairs with the distance feature |
 
@@ -117,7 +123,7 @@ guests, bedrooms, rating, distance to centre. This is the screen the user test e
   `β_j · (x_j − x̄_j)` in log price, shown in dollars as `benchmark · (exp(c_j) − 1)`. One-hot levels and the
   amenity families are grouped to one row each; the top 5 by absolute value are shown, the rest summed as
   "everything else".
-- **Caveat panel** (draft wording): "Labels compare a listing's quoted price in the June 2026 Inside Airbnb
+- **Caveat panel** (draft wording): "Labels compare a listing's quoted price in the September 2026 Inside Airbnb
   snapshot with what similar listings in this city quoted at the same time. Each listing has one dated
   quote, not a rate card. The data record no bookings, so a label is relative market value, not a true
   price. Typical benchmark error in this city: ±$X per night."
@@ -171,10 +177,10 @@ site/
     └── attractions.json                   # optional, scripts/build_attractions.py
 ```
 
-`scripts/build_map_data.py <city> <snapshot>` reads the scored table (parquet written by the modelling
-notebook under `data/scored/<city>_<snapshot>/`) and writes `site/data/`. That is the last stage of the
+`scripts/build_map_data.py <city> <snapshot>` reads the scored table (parquet written by
+`scripts/build_scored.py` under `data/scored/<city>_<snapshot>/`) and writes `site/data/`. That is the last stage of the
 "one command from download to map" promise, and it is the only code that knows both the model output and
-the map's file format. Until the notebooks exist, `scripts/stub_scores.py` writes a placeholder table in
+the map's file format. `scripts/stub_scores.py` writes a placeholder table in
 the same format (ridge + a small random forest, out-of-fold); the map says so in its metrics strip and
 caveat panel whenever it is showing stub scores.
 

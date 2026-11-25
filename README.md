@@ -251,11 +251,16 @@ jupyter lab
 
 A static site over precomputed scores: no server, no modelling at request time
 ([`docs/map_design.md`](docs/map_design.md) is the design). It reads one scored
-table per city from `data/scored/<city>_<snapshot>/scored.parquet`, the contract
-the modelling notebooks produce. Until they do, a placeholder scorer fills it:
+table per city from `data/scored/<city>_<snapshot>/scored.parquet`. The map
+shows the September 2026 release of all six cities (the release the results are
+reported on) with June 2026 as the previous release; the dates are `RELEASES` in
+`scripts/score_listings.py`. Score both releases, then build the map's files:
 
 ```bash
-python scripts/stub_scores.py --all        # placeholder scores: ridge + random forest, out-of-fold (~3 min)
+python scripts/score_listings.py --all     # out-of-fold fair prices from both models (September)
+python scripts/explain_en.py --all         # Elastic net contribution of each feature
+python scripts/build_scored.py --all       # -> data/scored/<city>_<snapshot>/scored.parquet
+# the same three with --release june for the previous release
 python scripts/build_map_data.py --all     # -> site/data/*.json (git-ignored, like data/)
 python scripts/build_attractions.py        # optional overlay: geocodes Kent's attraction list (~2 min)
 python -m http.server 8765 --directory site
@@ -263,11 +268,11 @@ python -m http.server 8765 --directory site
 
 Then open <http://localhost:8765>. One city at a time: points coloured by label,
 filters (stay type defaults to nightly quotes), a listing card with the benchmark,
-a dollar waterfall, comparables and the March-vs-June label where a city has two
-priced releases, a compare basket, a neighbourhood layer, and a band slider. Paste
-an Airbnb listing URL or id in the search box to jump to it. The map reads only
-the scored table, so swapping the stub for the real models is a rebuild, not a
-code change.
+a dollar waterfall, comparables and the June-vs-September label for listings
+priced in both releases, a compare basket, a neighbourhood layer, and a band
+slider. Paste an Airbnb listing URL or id in the search box to jump to it. The
+map reads only the scored table: `scripts/stub_scores.py <city> <snapshot>`
+writes a placeholder one in the same format when the models have not been run.
 
 ## Docs
 
@@ -307,7 +312,10 @@ cse6242-airbnb/
 │   ├── download_data.py        # Inside Airbnb downloader (see above)
 │   ├── amenities_breakout.py   # absorbed into strfair.features.amenity_features
 │   ├── tourist_area_distance.py # Kent's attraction list + distance feature
-│   ├── stub_scores.py          # placeholder scored table until the models exist
+│   ├── score_listings.py       # out-of-fold fair prices, both models (holds the map's release dates)
+│   ├── explain_en.py           # Elastic net contributions per listing
+│   ├── build_scored.py         # model outputs -> data/scored/ (the table the map reads)
+│   ├── stub_scores.py          # placeholder scored table in the same format
 │   ├── build_map_data.py       # scored table -> site/data/ (the map's files)
 │   └── build_attractions.py    # attraction overlay (geocodes the list above)
 ├── site/                       # the interactive map: static HTML + ES modules
