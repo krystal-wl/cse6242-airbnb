@@ -1,5 +1,5 @@
 import { state, on, emit } from './state.js';
-import { loadCities, loadCity, loadAttractions, parseListingId, readHash, writeHash } from './data.js';
+import { loadCities, loadCity, loadAttractions, loadSurvey, parseListingId, readHash, writeHash } from './data.js';
 import * as mapview from './mapview.js';
 import { initFilters, buildRoomTypes, visibleRows, renderCount, resetFilters } from './filters.js';
 import { renderCard, closeCard } from './card.js';
@@ -24,6 +24,12 @@ async function boot() {
     state.cities = await loadCities();
   } catch (e) {
     $('#loading').hidden = false; $('#loading').textContent = e.message; return;
+  }
+  if (state.survey) {  // survey view: see state.js
+    state.surveySets = await loadSurvey();
+    const asked = state.cities.filter(c => state.surveySets?.[c.slug]);
+    if (asked.length) { state.cities = asked; document.body.classList.add('survey'); }
+    else state.survey = false;
   }
   const sel = $('#city-select');
   sel.replaceChildren(...state.cities.map(c => h('option', { value: c.slug }, `${c.name} · ${fmtMonth(c.snapshot)}`)));
@@ -50,6 +56,11 @@ async function selectCity(slug, hash) {
   const d = await loadCity(meta);
   Object.assign(state, { city: meta, rows: d.rows, byId: d.byId, metrics: d.metrics, geojson: d.geojson, stub: d.stub,
                          release: 'current', selectedId: null, compare: [], compareOpen: false, hoodAggs: null });
+  state.surveyLetters = new Map();
+  for (const [letter, id] of Object.entries((state.survey && state.surveySets?.[slug]) || {})) {
+    if (d.byId.has(String(id))) state.surveyLetters.set(String(id), letter);
+    else console.warn(`survey.json: listing ${letter} (${id}) is not in ${meta.files.listings}`);
+  }
   $('#release-toggle').hidden = !meta.prev_snapshot;
   if (meta.prev_snapshot) {
     $('#release-toggle [data-release=current]').textContent = fmtMonth(meta.snapshot);
@@ -64,6 +75,7 @@ async function selectCity(slug, hash) {
   mapview.setSelected(null); mapview.setCompare([]);
   renderCompare();
   mapview.fitCity(meta.bounds);
+  if (state.surveyLetters.size) mapview.fitRows([...state.surveyLetters.keys()].map(id => d.byId.get(id)));
   refresh();
   renderMetrics(); renderCaveat();
   $('#loading').hidden = true; $('#map').classList.remove('dim');
@@ -76,8 +88,9 @@ async function selectCity(slug, hash) {
 function refresh() {
   const rows = visibleRows();
   state.visible = rows;
-  mapview.setPoints(rows, state.release);
-  mapview.setBand(state.band, state.control);
+  mapview.setPoints(rows, state.release, state.surveyLetters);
+  mapview.setBand(state.band, state.control, state.surveyLetters.size > 0);
+  renderSurvey();
   renderCount(rows.length, state.rows.length);
   if (state.layers.hoods) updateHoodLayer(); else state.hoodAggs = null;
   if (state.selectedId && state.byId.has(state.selectedId)) renderCard(state.byId.get(state.selectedId));
@@ -93,10 +106,11 @@ on('select', id => {
   mapview.setSelected(id);
   mapview.closePopup();
   renderCard(row);
-  mapview.flyToRow(row);
+  if (state.surveyLetters.has(id)) mapview.showRow(row); else mapview.flyToRow(row);
+  renderSurvey();
   updateHash();
 });
-on('close-card', () => { state.selectedId = null; mapview.setSelected(null); closeCard(); updateHash(); });
+on('close-card', () => { state.selectedId = null; mapview.setSelected(null); closeCard(); renderSurvey(); updateHash(); });
 
 on('toggle-compare', id => {
   const i = state.compare.indexOf(id);
@@ -110,6 +124,22 @@ on('toggle-compare', id => {
 });
 on('clear-compare', () => { state.compare = []; mapview.setCompare([]); renderCompare(); if (state.selectedId) renderCard(state.byId.get(state.selectedId)); setTimeout(() => mapview.resize(), 50); });
 on('toggle-compare-drawer', () => { state.compareOpen = !state.compareOpen; renderCompare(); setTimeout(() => mapview.resize(), 50); });
+
+// Survey view: the lettered pins on the map and the same listings as a list at the top of the side panel.
+function renderSurvey() {
+  const box = $('#survey-list');
+  const items = [...state.surveyLetters].sort((a, b) => a[1].localeCompare(b[1])).map(([id, letter]) => {
+    const row = state.byId.get(id), v = verdict(row, state.band, state.release);
+    return { id, letter, row, color: state.control || !v.label ? null : COLORS[v.label], selected: id === state.selectedId };
+  });
+  mapview.setPins(items.map(i => ({ id: i.id, letter: i.letter, lon: i.row.lon, lat: i.row.lat, color: i.color, selected: i.selected })));
+  box.hidden = !items.length;
+  if (!items.length) { box.replaceChildren(); return; }
+  box.replaceChildren(h('h3', {}, 'Listings in this survey'), ...items.map(i =>
+    h('button', { type: 'button', class: 'survey-row' + (i.selected ? ' on' : ''), onclick: () => emit('select', i.id) },
+      h('span', { class: 'pin-badge', style: i.color ? { '--c': i.color } : null }, i.letter),
+      h('span', { class: 'nm' }, i.row.name), h('span', { class: 'pr' }, fmtUsd(i.row.price)))));
+}
 
 function setRelease(release) {
   state.release = release;
@@ -171,15 +201,16 @@ function onHover(id, ev) {
   if (!id) { hideTip(); return; }
   const r = state.byId.get(id); if (!r) return;
   const v = verdict(r, state.band, state.release);
+  const letter = state.surveyLetters.get(id), title = letter ? `Listing ${letter} · ${r.name}` : r.name;
   if (state.control) {
     showTip(ev.clientX, ev.clientY, t => {
-      t.append(h('b', {}, r.name), h('br'), `${fmtUsd(v.price)} quoted`, h('br'),
+      t.append(h('b', {}, title), h('br'), `${fmtUsd(v.price)} quoted`, h('br'),
         h('span', { class: 'sub' }, `${r.room}, sleeps ${r.guests}${r.monthly ? ' · monthly quote' : ''}`));
     });
     return;
   }
   showTip(ev.clientX, ev.clientY, t => {
-    t.append(h('b', {}, r.name), h('br'),
+    t.append(h('b', {}, title), h('br'),
       `${fmtUsd(v.price)} quoted · benchmark ${fmtUsd(v.fair)} · `, h('b', {}, fmtPct(v.ratio)), h('br'),
       h('span', { class: 'sub' }, `${LABEL_TEXT[v.label]}${v.confident ? '' : ' (models disagree)'} · ${r.room}, sleeps ${r.guests}${r.monthly ? ' · monthly quote' : ''}`));
   });

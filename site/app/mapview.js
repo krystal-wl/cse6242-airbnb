@@ -70,6 +70,7 @@ function wire() {
     last = id;
   });
   map.on('mouseout', () => { last = null; cb.onHover?.(null); });
+  map.on('movestart', e => { if (e.originalEvent) framed = null; });  // a drag or zoom by the reader, not a move the page made
 }
 function nearest(features, lngLat) {
   let best = features[0], bd = Infinity;
@@ -80,25 +81,64 @@ function nearest(features, lngLat) {
   return best;
 }
 
-export function setPoints(rows, release) {
+export function setPoints(rows, release, pinned = null) {
   const features = new Array(rows.length);
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i], { ri, re } = ratiosOf(r, release);
-    features[i] = { type: 'Feature', geometry: { type: 'Point', coordinates: [r.lon, r.lat] }, properties: { id: r.id, r: ri, re: re ?? ri } };
+    features[i] = { type: 'Feature', geometry: { type: 'Point', coordinates: [r.lon, r.lat] }, properties: { id: r.id, r: ri, re: re ?? ri, s: pinned?.has(r.id) ? 1 : 0 } };
   }
   map.getSource('listings').setData({ type: 'FeatureCollection', features });
 }
 
 const PLAIN = '#4f6478';  // control-group view: every dot the same, no label colours
 
-export function setBand(band, control = false) {
+// fade: survey view, where every listing without a pin steps back
+export function setBand(band, control = false, fade = false) {
+  const dim = base => fade ? ['case', ['==', ['get', 's'], 1], base, 0.16] : base;
+  map.setPaintProperty('points', 'circle-stroke-opacity', dim(0.9));
   if (control) {
     map.setPaintProperty('points', 'circle-color', PLAIN);
-    map.setPaintProperty('points', 'circle-opacity', 0.8);
+    map.setPaintProperty('points', 'circle-opacity', dim(0.8));
     return;
   }
   map.setPaintProperty('points', 'circle-color', ['match', labelIdx('r', band), 0, COLORS.under, 2, COLORS.over, COLORS.fair]);
-  map.setPaintProperty('points', 'circle-opacity', ['case', ['==', labelIdx('r', band), labelIdx('re', band)], 0.88, 0.38]);
+  map.setPaintProperty('points', 'circle-opacity', dim(['case', ['==', labelIdx('r', band), labelIdx('re', band)], 0.88, 0.38]));
+}
+
+// Lettered pins for the survey listings: HTML markers, so they sit above every dot and need no map font.
+// items: [{ id, letter, lon, lat, color (null = plain), selected }]
+let pins = [];
+export function setPins(items) {
+  for (const p of pins) p.remove();
+  pins = items.map(it => {
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'pin' + (it.selected ? ' on' : '');
+    el.textContent = it.letter;
+    el.setAttribute('aria-label', `Listing ${it.letter}`);
+    if (it.color) el.style.setProperty('--c', it.color);
+    el.addEventListener('click', e => { e.stopPropagation(); cb.onPointClick?.(it.id); });
+    el.addEventListener('mouseenter', e => cb.onHover?.(it.id, e));
+    el.addEventListener('mousemove', e => e.stopPropagation());  // the map's own hover would hide the tooltip at the pin's edge
+    el.addEventListener('mouseleave', () => cb.onHover?.(null));
+    return new maplibregl.Marker({ element: el }).setLngLat([it.lon, it.lat]).addTo(map);
+  });
+}
+// Frame a handful of listings (the survey set) instead of the whole city.
+let framed = null;  // the rows last framed, until the reader moves the map themself
+export function fitRows(rows, duration = 0) {
+  if (!rows.length) return;
+  const b = new maplibregl.LngLatBounds();
+  for (const r of rows) b.extend([r.lon, r.lat]);
+  map.fitBounds(b, { padding: 70, maxZoom: 14, duration });
+  framed = rows;
+}
+// Opening a survey listing keeps the overview of all the pins. The card narrows the map, so the pins are
+// framed again; once the reader has moved the map, it only pans, without zooming, to a pin that is off screen.
+export function showRow(row) {
+  map.resize();
+  if (framed) fitRows(framed, 300);
+  else if (!map.getBounds().contains([row.lon, row.lat])) map.easeTo({ center: [row.lon, row.lat], duration: 500 });
 }
 
 export function setSelected(id) { map.setFilter('points-selected', ['==', ['get', 'id'], id ?? '']); }
@@ -108,6 +148,7 @@ export function flyToRow(row, minZoom = 14) {
   map.flyTo({ center: [row.lon, row.lat], zoom: Math.max(map.getZoom(), minZoom), speed: 1.4, essential: true });
 }
 export function fitCity(bounds) {
+  framed = null;
   map.fitBounds([[bounds[0], bounds[1]], [bounds[2], bounds[3]]], { padding: 30, duration: 0 });
 }
 

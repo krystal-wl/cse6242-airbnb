@@ -280,6 +280,12 @@ basket, with every model output left out (benchmark, labels, waterfall, fair
 band, between-release view). The scores are still in the files the page loads;
 they are only not shown.
 
+Adding `?survey=1` (alone or as `?v=b&survey=1`) opens the survey view: the
+listings named in `site/survey.json` (city, then letter, then listing id) get
+lettered pins, are listed at the top of the side panel and are never filtered
+out; every other listing is faded, and only the cities in that file are
+offered. `#city=toronto` at the end of the address picks the city.
+
 ## Docs
 
 - [`docs/pipeline.md`](docs/pipeline.md): the preprocessing every notebook

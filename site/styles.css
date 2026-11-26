@@ -96,6 +96,24 @@ input[type=range] { width: 100%; accent-color: var(--ink); }
 .ramp-legend .bar { height: 8px; border-radius: 4px; margin: 4px 0 2px; }
 .ramp-legend .ends { display: flex; justify-content: space-between; }
 
+/* survey view (?survey=1): lettered pins on the map, the same letters in the side list, the card and the tables */
+.pin { width: 28px; height: 28px; padding: 0; border-radius: 50%; border: 2px solid #fff; background: var(--c, #26364a); color: #fff; cursor: pointer;
+  font: 700 14px/1 system-ui, -apple-system, 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 5px rgba(0,0,0,.5); text-shadow: 0 0 2px rgba(0,0,0,.35); }
+.pin:hover, .pin:focus-visible { box-shadow: 0 0 0 3px rgba(11,11,11,.35), 0 1px 5px rgba(0,0,0,.5); outline: none; }
+.pin.on { box-shadow: 0 0 0 3px var(--ink), 0 1px 5px rgba(0,0,0,.5); z-index: 2; }
+.pin-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; margin-right: 7px; border-radius: 10px;
+  background: var(--c, #26364a); color: #fff; font-size: 12px; font-weight: 700; line-height: 1; vertical-align: 1px; flex: none; text-shadow: 0 0 2px rgba(0,0,0,.35); }
+.pin-badge.sm { min-width: 16px; height: 16px; padding: 0 4px; margin-right: 5px; font-size: 10.5px; }
+.survey-list { display: flex; flex-direction: column; gap: 2px; padding-bottom: 12px; border-bottom: 1px solid var(--hairline); }
+.survey-list h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-2); margin-bottom: 4px; }
+.survey-row { display: flex; align-items: center; width: 100%; padding: 4px 6px; margin: 0 -6px; border: 0; border-radius: 6px; background: transparent; cursor: pointer; text-align: left; font-size: 12.5px; }
+.survey-row:hover { background: var(--plane); }
+.survey-row.on { background: #e9e8e3; }
+.survey-row .pin-badge { margin-right: 8px; }
+.survey-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.survey-row .pr { margin-left: 8px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
 /* card */
 .card { width: 400px; flex: none; border-left: 1px solid var(--hairline); padding: 0 0 24px; }
 .card .card-head { position: sticky; top: 0; background: var(--surface); padding: 12px 18px 10px; border-bottom: 1px solid var(--hairline); display: flex; gap: 10px; align-items: flex-start; z-index: 1; }

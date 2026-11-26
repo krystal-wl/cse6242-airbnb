@@ -25,7 +25,7 @@ export function renderCard(row) {
   card.hidden = false;
 
   const head = h('div', { class: 'card-head' },
-    h('h2', {}, row.name || `Listing ${row.id}`),
+    h('h2', {}, state.surveyLetters.has(row.id) && h('span', { class: 'pin-badge' }, state.surveyLetters.get(row.id)), row.name || `Listing ${row.id}`),
     h('button', { class: 'close', 'aria-label': 'Close', onclick: () => emit('close-card') }, '×'));
 
   const agreeText = v.confident
@@ -83,7 +83,7 @@ export function renderCard(row) {
       h('tbody', {}, ...comps.map(c => {
         const cv = verdict(c, band, 'current');
         return h('tr', { class: 'row', onclick: () => emit('select', c.id) },
-          h('td', { class: 'name', title: c.name }, !control && h('span', { class: 'dot', style: { '--c': COLORS[cv.label] } }), c.name),
+          h('td', { class: 'name', title: c.name }, !control && h('span', { class: 'dot', style: { '--c': COLORS[cv.label] } }), state.surveyLetters.has(c.id) && h('span', { class: 'pin-badge sm' }, state.surveyLetters.get(c.id)), c.name),
           h('td', { class: 'num' }, fmtUsd(c.price)), !control && h('td', { class: 'num' }, fmtUsd(c.fair_i)), !control && h('td', { class: 'num' }, fmtPct(cv.ratio)));
       })));
     compsBlock.append(table);

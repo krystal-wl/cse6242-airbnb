@@ -6,6 +6,12 @@ export const state = {
   // model output (benchmark, labels, ratios, waterfall) left out. A link parameter, not a control on the
   // page, so a participant cannot switch it; the name says nothing about which group the link is for.
   control: new URLSearchParams(location.search).get('v') === 'b',
+  // Survey view, opened with ?survey=1 (works with ?v=b too): the listings named in survey.json carry lettered
+  // pins, are listed in the side panel and are never filtered out; every other listing is faded. Only the
+  // cities in survey.json are offered.
+  survey: new URLSearchParams(location.search).get('survey') === '1',
+  surveySets: null,                  // survey.json: { city slug: { letter: listing id } }
+  surveyLetters: new Map(),          // listing id -> letter, for the city on screen
   cities: [], city: null,            // city = the entry from cities.json
   rows: [], byId: new Map(), visible: [], metrics: null, geojson: null, attractions: null,
   band: 0.20, release: 'current',
