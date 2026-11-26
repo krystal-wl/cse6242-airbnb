@@ -67,8 +67,10 @@ export function renderCard(row) {
     h('span', {}, h('b', {}, row.km?.toFixed(1)), ' km from the centre'),
     h('span', {}, row.hood),
   );
+  // the map's data files carry no listing_url; an Airbnb listing's address is its id
+  const airbnbUrl = row.listing_url || `https://www.airbnb.com/rooms/${encodeURIComponent(row.id)}`;
   const listingBlock = h('div', { class: 'block' }, h('h3', {}, 'The listing'), facts,
-    h('p', { style: { margin: '10px 0 0' } }, h('a', { href: row.listing_url, target: '_blank', rel: 'noopener' }, 'View on Airbnb ↗'),
+    h('p', { style: { margin: '10px 0 0' } }, h('a', { href: airbnbUrl, target: '_blank', rel: 'noopener' }, 'View on Airbnb ↗'),
       h('span', { class: 'muted small' }, `  ·  id ${row.id}`)));
 
   const compsBlock = h('div', { class: 'block' }, h('h3', {}, 'Similar listings nearby'));
