@@ -7,7 +7,7 @@ import { renderCompare, MAX_COMPARE } from './compare.js';
 import { aggregate, colorScale, renderLegend, hoodPopup, MIN_N } from './hoods.js';
 import { verdict, COLORS, LABEL_TEXT } from './labels.js';
 import { fmtUsd, fmtInt, fmtShare, fmtPct, fmtDate, fmtMonth, h } from './format.js';
-import { showTip, hideTip } from './tooltip.js';
+import { showTip, hideTip, initHints } from './tooltip.js';
 
 const $ = s => document.querySelector(s);
 
@@ -19,6 +19,7 @@ async function boot() {
     state.layers.hoodMetric = 'n';
   }
   initFilters();
+  initHints();
   try {
     state.cities = await loadCities();
   } catch (e) {
@@ -82,6 +83,7 @@ function refresh() {
   if (state.selectedId && state.byId.has(state.selectedId)) renderCard(state.byId.get(state.selectedId));
   renderCompare();
   renderMetrics();
+  renderCaveat();
 }
 on('filters', refresh);
 
@@ -133,7 +135,7 @@ function wireChrome() {
     if (!state.compare.length) { flash('Pin listings from their card to compare them here.'); return; }
     emit('toggle-compare-drawer');
   });
-  $('#about-btn').addEventListener('click', () => { const c = $('#caveat'); c.hidden = false; c.classList.remove('collapsed'); c.scrollIntoView?.(); });
+  $('#about-btn').addEventListener('click', () => setCaveat(true));
   $('#filters-btn').addEventListener('click', () => $('#filters').classList.toggle('open'));
   $('#hood-layer').addEventListener('change', e => {
     state.layers.hoods = e.target.checked;
@@ -143,7 +145,7 @@ function wireChrome() {
   });
   $('#hood-metric').addEventListener('change', e => { state.layers.hoodMetric = e.target.value; updateHoodLayer(); });
   $('#attr-layer').addEventListener('change', e => { state.layers.attractions = e.target.checked; mapview.showAttractions(e.target.checked); });
-  $('#caveat').addEventListener('click', e => { if (e.target.closest('.head')) { const c = $('#caveat'); c.classList.toggle('collapsed'); try { localStorage.setItem('strfair-caveat', c.classList.contains('collapsed') ? '1' : ''); } catch {} } });
+  $('#caveat').addEventListener('click', e => { if (e.target.closest('.head')) setCaveat(!caveatOpen); });
   window.addEventListener('keydown', e => { if (e.key === 'Escape') { if (state.selectedId) emit('close-card'); mapview.closePopup(); } });
 }
 
@@ -190,28 +192,35 @@ function renderMetrics() {
     h('b', {}, c.name), ` · ${fmtDate(c.snapshot)} snapshot · `,
     h('b', {}, fmtInt(m.n)), ' priced listings, ', h('b', {}, fmtInt(state.visible.length)), ' shown',
   ];
-  if (state.control) { el.replaceChildren(...parts); return; }
-  parts.push(
-    ' · typical benchmark error ', h('b', {}, '±' + fmtUsd(m.nightly?.median_abs_err_usd)), '/night',
-    ' · fair ', h('b', {}, fmtShare(shareAt(state.band))),
-    ' · models agree ', h('b', {}, fmtShare(agreeAt(state.band))),
-  );
-  if (m.previous?.kept_label_share != null) parts.push(' · ', h('b', {}, fmtShare(keptAt(state.band))), ` kept their label since ${fmtMonth(m.previous.snapshot)}`);
-  if (state.stub) parts.push(h('span', { class: 'stub' }, 'Placeholder scores from scripts/stub_scores.py: the team\'s models replace them.'));
+  // one line; the model figures (error, fair share, agreement, label stability) are in the "How to read this map" panel
+  if (state.stub && !state.control) parts.push(h('span', { class: 'stub' }, 'Placeholder scores from scripts/stub_scores.py: the team\'s models replace them.'));
   el.replaceChildren(...parts);
 }
-// the metrics file is fixed at one band; these three follow the slider using the rows in memory
+// the metrics file is fixed at one band; these three follow the slider using the rows in memory (shown in the caveat panel)
 function shareAt(band) { let f = 0; for (const r of state.rows) if (verdict(r, band).label === 'fair') f++; return f / state.rows.length; }
 function agreeAt(band) { let a = 0; for (const r of state.rows) if (verdict(r, band).confident) a++; return a / state.rows.length; }
 function keptAt(band) { let n = 0, k = 0; for (const r of state.rows) { if (r.r_i_prev == null) continue; n++; if (verdict(r, band).label === verdict(r, band, 'prev').label) k++; } return n ? k / n : null; }
 
+// The panel starts as a one-line bar so it does not cover the map; the reader opens it from the bar or from
+// "How to read this" in the top bar, and the choice is remembered.
+let caveatOpen = false;
+try { caveatOpen = localStorage.getItem('strfair-caveat') === ''; } catch {}
+function setCaveat(open) {
+  caveatOpen = open;
+  try { localStorage.setItem('strfair-caveat', open ? '' : '1'); } catch {}
+  renderCaveat();
+}
+
 function renderCaveat() {
   const c = state.city, m = state.metrics, el = $('#caveat');
+  if (!c || !m) return;
   el.hidden = false;
-  // expanded on first visit when the map is wide enough to spare the space; the reader's last choice wins after that
-  let collapsed = document.getElementById('map').clientWidth < 900;
-  try { const saved = localStorage.getItem('strfair-caveat'); if (saved != null) collapsed = saved === '1'; } catch {}
+  const collapsed = !caveatOpen;
   el.classList.toggle('collapsed', collapsed);
+  if (collapsed) {  // only the bar: skip the per-listing counts below
+    el.replaceChildren(h('div', { class: 'head' }, 'How to read this map', h('span', { class: 'muted' }, '▸')));
+    return;
+  }
   if (state.control) {
     el.replaceChildren(
       h('div', { class: 'head' }, 'How to read this map', h('span', { class: 'muted' }, collapsed ? '▸' : '▾')),
@@ -226,6 +235,8 @@ function renderCaveat() {
       h('p', {}, `Each dot is a listing with a price in the ${fmtMonth(c.snapshot)} Inside Airbnb snapshot of ${c.name}. Its label compares that quoted price with a benchmark: what similar listings in the same city quoted at the same time, allowing for size, location, amenities, reviews and when the quote was taken.`),
       h('p', {}, 'Each listing has one dated quote, not a rate card: the price on another date may differ. The data record no bookings, so a label is relative market value, not a true price.'),
       h('p', {}, `A linear model explains the benchmark in dollars; a random forest checks it. Lighter dots are where the two disagree. Typical benchmark error here: ±${fmtUsd(m.nightly?.median_abs_err_usd)} per night on nightly quotes.`),
+      h('p', {}, `With the fair band at ±${Math.round(state.band * 100)}%: `, h('b', {}, fmtShare(shareAt(state.band))), ' of listings are fairly priced, the two models agree on ', h('b', {}, fmtShare(agreeAt(state.band))),
+        m.previous?.kept_label_share != null ? [', and ', h('b', {}, fmtShare(keptAt(state.band))), ` kept their label since ${fmtMonth(m.previous.snapshot)}`] : null, '.'),
       state.stub ? h('p', { style: { color: COLORS.over } }, 'Scores on this page come from a placeholder model so the map could be built; the team\'s models replace them.') : null,
     ));
 }

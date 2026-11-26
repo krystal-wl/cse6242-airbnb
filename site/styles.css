@@ -37,8 +37,9 @@ a { color: var(--accent); }
 .brand .sub { font-size: 11px; color: var(--muted); }
 .field { display: flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 13px; }
 .field select, .search input, .filters select, .filters input[type=number] { border: 1px solid var(--axis); border-radius: 6px; background: #fff; padding: 5px 8px; }
-.search { display: flex; align-items: center; gap: 6px; }
-.search input { width: 300px; }
+/* the search box gives up width before the bar wraps onto a second row */
+.search { display: flex; align-items: center; gap: 6px; flex: 1 1 230px; max-width: 362px; min-width: 200px; }
+.search input { flex: 1 1 0; min-width: 0; width: auto; }
 .search .msg { font-size: 12px; color: var(--over); max-width: 220px; }
 .spacer { flex: 1; }
 .btn { border: 1px solid var(--axis); background: #fff; border-radius: 6px; padding: 5px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
@@ -67,6 +68,12 @@ a { color: var(--accent); }
 .filters .seg { display: flex; }
 .filters .seg button { flex: 1; padding: 6px 4px; font-size: 12.5px; }
 .hint { margin: 6px 0 0; font-size: 12px; color: var(--muted); line-height: 1.35; }
+/* hint button: help text shown in the tooltip on hover, focus or click (app/tooltip.js) */
+.info { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; margin-left: 6px; padding: 0; flex: none;
+  border: 1px solid var(--axis); border-radius: 50%; background: #fff; color: var(--ink-2); cursor: help; vertical-align: 1px;
+  font: italic 600 11px/1 Georgia, 'Times New Roman', serif; text-transform: none; letter-spacing: 0; }
+.info:hover, .info:focus-visible { border-color: var(--ink); color: var(--ink); outline: none; box-shadow: 0 0 0 2px rgba(42,120,214,.25); }
+.tooltip.hint-tip { max-width: 280px; padding: 8px 11px; line-height: 1.4; }
 .checks { display: flex; flex-direction: column; gap: 5px; }
 .checks label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .checks label.sep { margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--hairline); }
@@ -116,7 +123,7 @@ input[type=range] { width: 100%; accent-color: var(--ink); }
 .comps tr.row { cursor: pointer; }
 .comps tr.row:hover { background: var(--plane); }
 .comps .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.comps .name { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.comps .name { max-width: 190px; overflow-wrap: anywhere; line-height: 1.3; }  /* long names wrap instead of being cut */
 .comps .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 5px; vertical-align: middle; }
 .card .actions { display: flex; gap: 8px; padding: 14px 18px; }
 .muted { color: var(--muted); }
@@ -139,10 +146,14 @@ input[type=range] { width: 100%; accent-color: var(--ink); }
 .metrics { position: absolute; left: 12px; right: 60px; top: 12px; background: rgba(252,252,251,.94); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; font-size: 12px; color: var(--ink-2); box-shadow: var(--shadow); max-width: 560px; line-height: 1.5; }
 .metrics b { color: var(--ink); font-weight: 600; }
 .metrics .stub { display: block; color: var(--over); }
-.caveat { position: absolute; right: 12px; bottom: 12px; width: 330px; max-width: calc(100% - 24px); background: rgba(252,252,251,.96); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); font-size: 12.5px; line-height: 1.45; color: var(--ink-2); }
+/* bottom left: the bottom right corner belongs to the map's scale bar and attribution */
+.caveat { position: absolute; left: 12px; bottom: 12px; width: 330px; max-width: calc(100% - 24px); background: rgba(252,252,251,.96); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); font-size: 12.5px; line-height: 1.45; color: var(--ink-2); }
 .caveat .head { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; font-weight: 600; color: var(--ink); cursor: pointer; }
 .caveat .body { padding: 0 12px 10px; }
 .caveat .body p { margin: 0 0 6px; }
+.caveat .body b { color: var(--ink); font-weight: 600; }
+.caveat .head { gap: 10px; }
+.caveat.collapsed { width: auto; }
 .caveat.collapsed .body { display: none; }
 .loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(243,243,240,.6); font-size: 15px; color: var(--ink-2); z-index: 5; }
 .tooltip { position: fixed; pointer-events: none; background: var(--ink); color: #fff; padding: 6px 9px; border-radius: 6px; font-size: 12px; line-height: 1.35; max-width: 260px; z-index: 20; box-shadow: var(--shadow); }
@@ -175,7 +186,7 @@ input[type=range] { width: 100%; accent-color: var(--ink); }
 
 @media (max-width: 900px) {
   .brand .sub { display: none; }
-  .search input { width: 180px; }
+  .search { flex-basis: 240px; min-width: 150px; }
   .small-only { display: inline-flex; }
   .filters { position: absolute; left: 0; top: 0; bottom: 0; z-index: 4; transform: translateX(-100%); transition: transform .2s; box-shadow: var(--shadow); }
   .filters.open { transform: none; }

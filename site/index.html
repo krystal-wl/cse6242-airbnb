@@ -35,20 +35,19 @@
   <main class="layout">
     <aside id="filters" class="panel filters" aria-label="Filters">
       <section class="legend model-only" aria-label="Legend">
-        <div class="legend-row"><span class="swatch" style="--c:#2a78d6"></span>Underpriced <span class="legend-note">price below benchmark − band</span></div>
+        <div class="legend-row"><span class="swatch" style="--c:#2a78d6"></span>Underpriced <span class="legend-note">below the band</span></div>
         <div class="legend-row"><span class="swatch" style="--c:#8a8880"></span>Fairly priced <span class="legend-note">within the band</span></div>
-        <div class="legend-row"><span class="swatch" style="--c:#eb6834"></span>Overpriced <span class="legend-note">price above benchmark + band</span></div>
+        <div class="legend-row"><span class="swatch" style="--c:#eb6834"></span>Overpriced <span class="legend-note">above the band</span></div>
         <div class="legend-row"><span class="swatch faint" style="--c:#8a8880"></span>Lighter dot: the two models disagree</div>
       </section>
 
       <fieldset>
-        <legend>Stay type</legend>
+        <legend><span>Stay type<button type="button" class="info" data-hint="A monthly quote is a per-night rate after a long-stay discount, roughly half the nightly level, so the two are compared separately.">i</button></span></legend>
         <div class="seg" id="stay-seg" role="group">
           <button type="button" data-stay="nightly" class="on">Nightly</button>
           <button type="button" data-stay="monthly">Monthly (28+ nights)</button>
           <button type="button" data-stay="all">All</button>
         </div>
-        <p class="hint">A monthly quote is a per-night rate after a long-stay discount, roughly half the nightly level, so the two are compared separately.</p>
       </fieldset>
 
       <fieldset>
@@ -94,9 +93,8 @@
       </fieldset>
 
       <fieldset class="model-only">
-        <legend>Fair band <output id="band-val">±20%</output></legend>
+        <legend><span>Fair band<button type="button" class="info" data-hint="A listing is &quot;fair&quot; when its price is within this band of the benchmark. Widen it and fewer listings are flagged.">i</button></span> <output id="band-val">±20%</output></legend>
         <input id="band" type="range" min="5" max="40" step="5" value="20" aria-label="Fair band width">
-        <p class="hint">A listing is "fair" when its price is within this band of the benchmark. Widen it and fewer listings are flagged.</p>
       </fieldset>
 
       <fieldset>

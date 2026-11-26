@@ -58,7 +58,7 @@ export function waterfall(el, { base, baseLabel, fair, fairLabel, deltas }) {
 // Distribution of price ÷ benchmark on a log axis, with the fair band shaded and an optional marker.
 export function histogram(el, values, { band, marker, width, height, markerLabel }) {
   width = width || el.clientWidth || 360; height = height || 110;
-  const m = { top: 6, right: 8, bottom: 20, left: 8 };
+  const m = { top: markerLabel ? 18 : 6, right: 8, bottom: 20, left: 8 };  // room above the bars for the marker's label
   const x = d3.scaleLog().domain([0.4, 2.5]).range([m.left, width - m.right]).clamp(true);
   const thresholds = d3.range(Math.log2(0.4), Math.log2(2.5) + 1e-9, (Math.log2(2.5) - Math.log2(0.4)) / 26).map(v => 2 ** v);
   const bins = d3.bin().domain([0.4, 2.5]).thresholds(thresholds)(values.map(v => Math.min(2.499, Math.max(0.4, v))));
@@ -84,8 +84,8 @@ export function histogram(el, values, { band, marker, width, height, markerLabel
     .attr('text-anchor', 'middle').text(d => d + '×');
   if (marker != null) {
     const mx = x(marker);
-    svg.append('line').attr('class', 'marker').attr('x1', mx).attr('x2', mx).attr('y1', m.top - 2).attr('y2', height - m.bottom);
-    if (markerLabel) svg.append('text').attr('class', 'ink').attr('x', mx + (mx > width / 2 ? -5 : 5)).attr('y', m.top + 9)
+    svg.append('line').attr('class', 'marker').attr('x1', mx).attr('x2', mx).attr('y1', markerLabel ? 2 : m.top - 2).attr('y2', height - m.bottom);
+    if (markerLabel) svg.append('text').attr('class', 'ink').attr('x', mx + (mx > width / 2 ? -5 : 5)).attr('y', 11)
       .attr('text-anchor', mx > width / 2 ? 'end' : 'start').style('font-weight', 600).text(markerLabel);
   }
   el.replaceChildren(svg.node());
