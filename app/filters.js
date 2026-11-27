@@ -22,7 +22,8 @@ export function passes(row, f, band, release) {
 
 export function visibleRows() {
   const { filters, band, release } = state;
-  return state.rows.filter(r => passes(r, filters, band, release));
+  const pinned = state.surveyLetters;  // survey listings stay on the map whatever the filters say
+  return state.rows.filter(r => (pinned.has(r.id) && !(release === 'prev' && r.r_i_prev == null)) || passes(r, filters, band, release));
 }
 
 function setSeg(sel, btn) {

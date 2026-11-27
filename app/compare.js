@@ -26,7 +26,8 @@ export function renderCompare() {
     h('tbody', {}, ...rows.map((r, i) => {
       const v = vs[i];
       return h('tr', { class: !control && v.ratio === bestRatio && rows.length > 1 ? 'best' : '' },
-        h('td', { class: 'name', title: r.name, onclick: () => emit('select', r.id) }, r.name),
+        h('td', { class: 'name', title: r.name, onclick: () => emit('select', r.id) },
+          state.surveyLetters.has(r.id) && h('span', { class: 'pin-badge sm' }, state.surveyLetters.get(r.id)), r.name),
         !control && h('td', {}, h('span', { class: 'tag', style: { '--c': COLORS[v.label] } }, h('span', { class: 'dot' }), LABEL_TEXT[v.label])),
         h('td', { class: 'num' }, fmtUsd(r.price)), !control && h('td', { class: 'num' }, fmtUsd(r.fair_i)), !control && h('td', { class: 'num' }, fmtPct(v.ratio)),
         !control && h('td', {}, v.confident ? 'agree' : 'disagree'),

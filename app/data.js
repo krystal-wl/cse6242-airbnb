@@ -24,6 +24,14 @@ export async function loadCity(meta) {
   return { rows, byId, metrics, geojson, snapshot: listings.snapshot, prev: listings.prev_snapshot, stub: !!listings.stub };
 }
 
+// The listings a survey asks about (site/survey.json, kept in git: it is hand-written, not built).
+export async function loadSurvey() {
+  try {
+    const r = await fetch('survey.json');
+    return r.ok ? await r.json() : null;
+  } catch { return null; }
+}
+
 export async function loadAttractions() {
   try {
     const r = await fetch(DATA + 'attractions.json');

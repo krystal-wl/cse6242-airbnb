@@ -3,6 +3,7 @@ import { state, emit } from './state.js';
 import { verdict, labelOf, COLORS, LABEL_TEXT } from './labels.js';
 import { fmtUsd, fmtSignedUsd, fmtPct, fmtInt, fmtDate, fmtMonth, fmtRatio, plural, h } from './format.js';
 import { waterfall, histogram } from './charts.js';
+import { info } from './tooltip.js';
 
 const $card = () => document.getElementById('card');
 
@@ -24,7 +25,7 @@ export function renderCard(row) {
   card.hidden = false;
 
   const head = h('div', { class: 'card-head' },
-    h('h2', {}, row.name || `Listing ${row.id}`),
+    h('h2', {}, state.surveyLetters.has(row.id) && h('span', { class: 'pin-badge' }, state.surveyLetters.get(row.id)), row.name || `Listing ${row.id}`),
     h('button', { class: 'close', 'aria-label': 'Close', onclick: () => emit('close-card') }, '×'));
 
   const agreeText = v.confident
@@ -50,12 +51,12 @@ export function renderCard(row) {
     : `This quote was for ${plural(row.nights, 'night')} from ${fmtDate(row.checkin)}, captured ${plural(row.lead, 'day')} ahead. The benchmark controls for that timing; the price on another date may differ.`;
   const quoteBlock = h('div', { class: 'block' }, h('h3', {}, 'The quote'), h('p', { class: 'quote-ctx' }, quote));
 
-  const whyBlock = h('div', { class: 'block' }, h('h3', {}, 'Why the benchmark is ' + fmtUsd(row.fair_i)));
   const chart = h('div', { class: 'chart' });
   const stayWord = row.monthly ? 'monthly' : 'nightly';
   const base = state.metrics?.base_price?.[stayWord] ?? row.fair_i;
-  whyBlock.append(chart, h('p', { class: 'hint' },
-    `Starting from the typical ${stayWord} listing in ${city.name} (${fmtUsd(base)} per night), each row is what this listing's features add or take away, in dollars.`));
+  const whyBlock = h('div', { class: 'block' }, h('h3', {}, 'Why the benchmark is ' + fmtUsd(row.fair_i),
+    info(`Starting from the typical ${stayWord} listing in ${city.name} (${fmtUsd(base)} per night), each row is what this listing's features add or take away, in dollars.`)),
+    chart);
 
   const facts = h('div', { class: 'facts' },
     h('span', {}, h('b', {}, row.room)),
@@ -67,11 +68,14 @@ export function renderCard(row) {
     h('span', {}, h('b', {}, row.km?.toFixed(1)), ' km from the centre'),
     h('span', {}, row.hood),
   );
+  // the map's data files carry no listing_url; an Airbnb listing's address is its id
+  const airbnbUrl = row.listing_url || `https://www.airbnb.com/rooms/${encodeURIComponent(row.id)}`;
   const listingBlock = h('div', { class: 'block' }, h('h3', {}, 'The listing'), facts,
-    h('p', { style: { margin: '10px 0 0' } }, h('a', { href: row.listing_url, target: '_blank', rel: 'noopener' }, 'View on Airbnb ↗'),
+    h('p', { style: { margin: '10px 0 0' } }, h('a', { href: airbnbUrl, target: '_blank', rel: 'noopener' }, 'View on Airbnb ↗'),
       h('span', { class: 'muted small' }, `  ·  id ${row.id}`)));
 
-  const compsBlock = h('div', { class: 'block' }, h('h3', {}, 'Similar listings nearby'));
+  const compsBlock = h('div', { class: 'block' }, h('h3', {}, 'Similar listings nearby',
+    info('Same room type and stay type, bedrooms within one, nearest first. Click a row to open it.')));
   const comps = (row.comps || []).map(id => state.byId.get(id)).filter(Boolean);
   if (comps.length) {
     const table = h('table', { class: 'comps' },
@@ -79,10 +83,10 @@ export function renderCard(row) {
       h('tbody', {}, ...comps.map(c => {
         const cv = verdict(c, band, 'current');
         return h('tr', { class: 'row', onclick: () => emit('select', c.id) },
-          h('td', { class: 'name', title: c.name }, !control && h('span', { class: 'dot', style: { '--c': COLORS[cv.label] } }), c.name),
+          h('td', { class: 'name', title: c.name }, !control && h('span', { class: 'dot', style: { '--c': COLORS[cv.label] } }), state.surveyLetters.has(c.id) && h('span', { class: 'pin-badge sm' }, state.surveyLetters.get(c.id)), c.name),
           h('td', { class: 'num' }, fmtUsd(c.price)), !control && h('td', { class: 'num' }, fmtUsd(c.fair_i)), !control && h('td', { class: 'num' }, fmtPct(cv.ratio)));
       })));
-    compsBlock.append(table, h('p', { class: 'hint' }, `Same room type and stay type, bedrooms within one, nearest first. Click a row to open it.`));
+    compsBlock.append(table);
   } else {
     compsBlock.append(h('p', { class: 'muted small' }, 'No similar listing within 3 km.'));
   }
@@ -106,10 +110,11 @@ export function renderCard(row) {
   const hoodRows = state.rows.filter(r => r.hood === row.hood && !!r.monthly === !!row.monthly);
   const ratios = hoodRows.map(r => r.r_i);
   const pct = Math.round(100 * ratios.filter(x => x < row.r_i).length / Math.max(1, ratios.length));
-  const hoodBlock = h('div', { class: 'block' }, h('h3', {}, 'In its neighbourhood'));
+  const hoodBlock = h('div', { class: 'block' }, h('h3', {}, 'In its neighbourhood',
+    info(`Each bar counts ${stayWord} listings in ${row.hood} by price ÷ benchmark; the line marks this listing. Shaded: the fair band.`)));
   const hchart = h('div', { class: 'chart' });
-  hoodBlock.append(hchart, h('p', { class: 'hint' },
-    `Price ÷ benchmark for the ${fmtInt(hoodRows.length)} ${row.monthly ? 'monthly' : 'nightly'} listings in ${row.hood}; this one sits above ${pct}% of them. Shaded: the fair band.`));
+  hoodBlock.append(hchart, h('p', { class: 'quote-ctx', style: { margin: '6px 0 0' } },
+    `Its price ÷ benchmark is higher than ${pct}% of the ${fmtInt(hoodRows.length)} ${stayWord} listings in ${row.hood}.`));
 
   const pinned = state.compare.includes(row.id);
   const actions = h('div', { class: 'actions' },
